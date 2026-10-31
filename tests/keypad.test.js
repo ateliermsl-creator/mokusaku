@@ -110,3 +110,22 @@ test('真的有誤才回報錯誤', () => {
   assert.ok(softEval('1尺 / 0 ').error);                                // 除以 0 不被容錯吞掉
   assert.ok(softEval('2丈 + 3尺 abc').error);
 });
+
+test('裏目鍵：×√2、÷√2', () => {
+  assert.equal(press(['3', '尺', '×√2']), '3尺 × √2');
+  assert.equal(press(['3', '尺', '÷√2']), '3尺 ÷ √2');
+  assert.equal(press(['×√2']), '');                     // 沒有前一個數字不能按
+  assert.equal(press(['3', '+', '×√2']), '3 + ');
+  assert.equal(press(['3', '尺', '×√2', 'bs']), '3尺 × ');   // √2 整組刪
+  assert.equal(press(['3', '尺', '×√2', 'bs', 'bs']), '3尺');
+  assert.equal(press(['(', '3', '尺', ')', '×√2']), '(3尺) × √2');
+  close(softEval('3尺 × √2').mm, 3 * SHAKU_MM * Math.SQRT2);
+  close(softEval('1間 ÷ √2').mm, 6 * SHAKU_MM / Math.SQRT2);
+  const r = softEval('3尺 × √2');
+  assert.ok(!r.pending && !r.partial, '√2 結尾不算「還沒選單位的數字」');
+});
+test('厘、cm、m 單位鍵', () => {
+  assert.equal(press(['5', '厘']), '5厘');
+  assert.equal(press(['2', '0', 'cm']), '20cm');
+  assert.equal(press(['1', 'm']), '1m');
+});

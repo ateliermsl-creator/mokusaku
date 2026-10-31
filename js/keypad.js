@@ -4,6 +4,7 @@
 import { evalLength } from './units.js';
 
 export const UNIT_KEYS = ['丈', '間', '尺', '寸', '分', '厘', 'mm', 'cm', 'm'];
+const SQRT_KEYS = { '×√2': ' × √2', '÷√2': ' ÷ √2' }; // 曲尺裏目：對角線、角目
 const OPS = ['+', '−', '×', '÷'];
 // 這幾種錯誤代表「還沒輸入完」，其餘（除以 0、無法辨識的字…）是真的有誤
 const INCOMPLETE_ERRORS = ['算式有多餘的部分', '算式不完整', '缺少右括號 )'];
@@ -22,7 +23,7 @@ export function applyKey(value, selStart = value.length, selEnd = selStart, key)
 
   if (key === 'bs') {
     if (selStart !== selEnd) return { value: before + after, caret: before.length };
-    const m = /( [+−×÷] |mm|cm|台尺|[\s\S])$/.exec(before);
+    const m = /( [+−×÷] |mm|cm|台尺|√2|[\s\S])$/.exec(before);
     if (!m) return null;
     before = before.slice(0, before.length - m[0].length);
     return done();
@@ -62,6 +63,13 @@ export function applyKey(value, selStart = value.length, selEnd = selStart, key)
     return done();
   }
 
+  if (key in SQRT_KEYS) {                     // 接在完成的數字／單位／括號之後
+    const t = trimEnd(before);
+    if (t === '' || OPEN_OR_OP_END.test(t)) return null;
+    dropDot(); before = trimEnd(before); ins = SQRT_KEYS[key];
+    return done();
+  }
+
   if (key === '(') {
     const t = trimEnd(before);
     if (t === '' || OPEN_OR_OP_END.test(t)) { ins = '('; return done(); }
@@ -93,7 +101,7 @@ export function softEval(src) {
   if (!s0.trim()) return { empty: true };
   const closeParens = (x) => x + ')'.repeat(Math.max(0, (x.match(/\(/g) || []).length - (x.match(/\)/g) || []).length));
   const stripOps = (x) => x.replace(/[\s+\-−×÷*/(]+$/, '');
-  const pending = /[\d.]$/.test(s0);                 // 結尾有數字，還沒選單位
+  const pending = /[\d.]$/.test(s0) && !/√2$/.test(s0); // 結尾有數字，還沒選單位（√2 是常數，不算）
   const dangling = /[+\-−×÷*/(]$/.test(s0);           // 結尾是運算符或左括號
 
   // 先看原本的錯誤是「還沒輸入完」還是「真的有誤」；真的有誤就直接回報，不容錯

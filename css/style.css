@@ -15,6 +15,8 @@
   --hero: #f1e6d2;
   --hero-line: #e2d2b4;
   --keys-h: 46px;
+  --s0: #8a4f1a; --s1: #c4863f; --s2: #e0b56e; --s3: #a9a28f;
+  --lb-good: #c0392b; --lb-bad: #3a3a3a;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -31,6 +33,8 @@
     --fig-fill: rgba(224, 164, 94, .12);
     --hero: #2a2217;
     --hero-line: #3d3326;
+    --s0: #e0a45e; --s1: #b9803a; --s2: #8a5f2b; --s3: #7a7260;
+    --lb-good: #d4574a; --lb-bad: #5a5a5a;
   }
 }
 
@@ -290,3 +294,54 @@ input[type="search"] { -webkit-appearance: none; appearance: none; }
 .keypad .k.u:active { filter: brightness(.9); }
 .keypad .k.op { background: var(--surface-2); color: var(--accent); }
 .keypad .k.fn { font-size: 17px; color: var(--muted); background: var(--surface-2); }
+
+/* ---------- 計算機圖示 ---------- */
+.figbox { margin: 10px 0; padding: 6px 6px 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.figbox .fig.big { margin: 0; background: none; border: 0; }
+.figbox figcaption { padding: 2px 8px 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
+.fig .hyp { stroke: var(--accent); stroke-width: 3; fill: none; stroke-linecap: round; }
+.fig .rf { stroke: var(--fig-line); stroke-width: 1.6; }
+.fig .rf1 { stroke: var(--accent); stroke-width: 2.8; }
+.fig .dot { fill: var(--accent); stroke: none; }
+.fig .dash2 { stroke: var(--ink); stroke-width: 2; stroke-dasharray: 6 4; fill: none; }
+.fig .t2 { font-size: 10.5px; fill: var(--muted); }
+.fig .t3 { font-size: 9px; fill: var(--muted); }
+.fig text.good { fill: #1d7a3a; font-weight: 600; }
+.fig text.bad { fill: #c0392b; font-weight: 600; }
+@media (prefers-color-scheme: dark) { .fig text.good { fill: #8fe0a5; } .fig text.bad { fill: #ff9a8e; } }
+.fig .seg { stroke: none; }
+.fig .seg0 { fill: var(--s0); } .fig .seg1 { fill: var(--s1); } .fig .seg2 { fill: var(--s2); } .fig .seg3 { fill: var(--s3); }
+.fig .lb-good { fill: var(--lb-good); stroke: var(--surface); stroke-width: 1; }
+.fig .lb-bad { fill: var(--lb-bad); stroke: var(--surface); stroke-width: 1; }
+.fig text.lb-t { fill: #fff; font-size: 12px; font-weight: 700; }
+.fig .lb-mark { fill: var(--accent); stroke: none; }
+
+/* 按鍵：×√2、÷√2 */
+.keypad .k.sq { font-size: 17px; color: var(--accent); background: var(--surface-2); border-color: var(--accent); }
+
+/* 四制同步換算 */
+.four { margin: 8px 0 12px; }
+.four.partial { opacity: .6; }
+.four-empty { padding: 14px; text-align: center; color: var(--muted); background: var(--surface); border: 1px dashed var(--line); border-radius: 14px; }
+.fsec { margin: 0 0 10px; padding: 10px 14px 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.fsec h3 { margin: 0 0 4px; font-size: 15px; color: var(--accent); }
+.fsec h3 small { margin-left: 8px; font-size: 12px; font-weight: 400; color: var(--muted); }
+.frow { display: grid; grid-template-columns: minmax(7.5em, 40%) 1fr; gap: 4px 10px; align-items: baseline; padding: 7px 0; border-top: 1px dashed var(--line); }
+.frow:first-of-type { border-top: 0; }
+.fk { font-size: 13px; color: var(--muted); }
+.fv { text-align: right; font-variant-numeric: tabular-nums; }
+.fv b { font-size: 17px; }
+.fv small { display: block; font-size: 12px; color: var(--muted); }
+.lb { padding: 8px 0 4px; border-top: 1px dashed var(--line); }
+.lb:first-of-type { border-top: 0; }
+.lb-head { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.lb-head b { font-size: 16px; }
+.lb-head small { color: var(--muted); font-size: 12px; }
+.lb-head .fsel { margin-left: auto; width: auto; min-height: 36px; padding: 0 8px; font-size: 14px; }
+.lb-fig .figbox { margin: 4px 0; padding: 0; border: 0; background: none; }
+.lb-msg { margin: 2px 0 6px; font-size: 14px; }
+.lb-good { color: #1d7a3a; } .lb-edge { color: #a86a00; } .lb-bad { color: #c0392b; }
+@media (prefers-color-scheme: dark) { .lb-good { color: #8fe0a5; } .lb-edge { color: #ffd98a; } .lb-bad { color: #ff9a8e; } }
+.lb-sug { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
+.lb-sug .btnlink { justify-content: center; min-height: 42px; text-align: center; }
+.lb-use { margin: 0 0 4px; font-size: 12px; color: var(--muted); }

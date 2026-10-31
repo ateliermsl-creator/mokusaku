@@ -17,7 +17,8 @@ export const UNITS = {
   'm': 1000,
 };
 
-const TOKEN = /\s*(?:(\d+(?:\.\d+)?|\.\d+)|(mm|cm|m|丈|間|台尺|尺|寸|分|厘)|([+\-*/()]))/y;
+// 1:√2 常數（曲尺裏目用）  2:數字  3:單位  4:運算符
+const TOKEN = /\s*(?:(√2)|(\d+(?:\.\d+)?|\.\d+)|(mm|cm|m|丈|間|台尺|尺|寸|分|厘)|([+\-*/()]))/y;
 
 function normalize(src) {
   return String(src)
@@ -38,9 +39,10 @@ function tokenize(s) {
     TOKEN.lastIndex = pos;
     const m = TOKEN.exec(s);
     if (!m) throw new Error(`無法辨識「${s[pos]}」`);
-    if (m[1] !== undefined) tokens.push({ t: 'num', v: parseFloat(m[1]) });
-    else if (m[2] !== undefined) tokens.push({ t: 'unit', v: m[2] });
-    else tokens.push({ t: 'op', v: m[3] });
+    if (m[1] !== undefined) tokens.push({ t: 'num', v: Math.SQRT2 });
+    else if (m[2] !== undefined) tokens.push({ t: 'num', v: parseFloat(m[2]) });
+    else if (m[3] !== undefined) tokens.push({ t: 'unit', v: m[3] });
+    else tokens.push({ t: 'op', v: m[4] });
     pos = TOKEN.lastIndex;
   }
   return tokens;
@@ -114,20 +116,38 @@ export function evalLength(src) {
   return v;
 }
 
-function fmtParts(mm, bigName, bigShaku) {
-  if (!Number.isFinite(mm)) return '—';
-  const sign = mm < 0 ? '−' : '';
+/** 把長度拆成 { sign, big, shaku, sun, bun }（bigShaku：1 個「大單位」等於幾尺；四捨五入到 0.1 分） */
+export function splitShaku(mm, bigShaku) {
   let tenth = Math.round((Math.abs(mm) / SHAKU_MM) * 1000); // 單位：0.1 分（1 尺 = 1000）
   const big = Math.floor(tenth / (bigShaku * 1000)); tenth %= bigShaku * 1000;
   const shaku = Math.floor(tenth / 1000); tenth %= 1000;
   const sun = Math.floor(tenth / 100); tenth %= 100;
-  const bun = tenth / 10;
+  return { sign: mm < 0 ? -1 : 1, big, shaku, sun, bun: tenth / 10 };
+}
+
+function fmtParts(mm, bigName, bigShaku) {
+  if (!Number.isFinite(mm)) return '—';
+  const { sign, big, shaku, sun, bun } = splitShaku(mm, bigShaku);
   let out = '';
   if (big) out += `${big}${bigName}`;
   if (shaku) out += `${shaku}尺`;
   if (sun) out += `${sun}寸`;
   if (bun) out += `${bun}分`;
-  return out ? sign + out : '0';
+  return out ? (sign < 0 ? '−' : '') + out : '0';
+}
+
+/** mm → 「20尺8寸9分6厘」（尺為最大單位，精算到厘＝0.1 分） */
+export function toShakuRi(mm) {
+  if (!Number.isFinite(mm)) return '—';
+  const { sign, shaku, sun, bun } = splitShaku(mm, 1e6);
+  const fen = Math.floor(bun + 1e-9);
+  const li = Math.round((bun - fen) * 10);
+  let out = '';
+  if (shaku) out += `${shaku}尺`;
+  if (sun) out += `${sun}寸`;
+  if (fen) out += `${fen}分`;
+  if (li) out += `${li}厘`;
+  return out ? (sign < 0 ? '−' : '') + out : '0';
 }
 
 /** mm → 台尺「2丈5寸4.5分」（四捨五入到 0.1 分；丈 = 10 尺） */

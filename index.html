@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hant-TW" data-v="7">
+<html lang="zh-Hant-TW" data-v="8">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -161,18 +161,31 @@
         <button type="button" class="k u" data-k="mm">mm</button>
         <button type="button" class="k op" data-k="+">＋</button>
         <button type="button" class="k op" data-k=")">)</button>
+        <button type="button" class="k u" data-k="厘">厘</button>
+        <button type="button" class="k u" data-k="cm">cm</button>
+        <button type="button" class="k u" data-k="m">m</button>
+        <button type="button" class="k sq" data-k="×√2" aria-label="乘以根號二：裏目、對角線">×√2</button>
+        <button type="button" class="k sq" data-k="÷√2" aria-label="除以根號二：角目">÷√2</button>
       </div>
 
       <div class="row">
         <button id="calc-save" type="button" class="btn primary">記錄</button>
         <button id="calc-kb" type="button" class="btn">⌨ 改用手機鍵盤</button>
       </div>
+      <div id="mix-fig"></div>
+      <h2>四制同步換算 <i class="jp">公制・尺貫法・曲尺裏目・魯班尺</i></h2>
+      <div id="four-panel" class="four"></div>
       <h2>歷史紀錄 <i class="jp">履歴</i></h2>
       <ul id="history" class="history"></ul>
+      <details class="gl-about">
+        <summary>圖解：丈、間、尺、寸、分的關係</summary>
+        <div id="mix-ladder"></div>
+      </details>
       <p class="note">
-        先點數字，再點單位（丈・尺・寸・分・間・mm），連著點會自動相加，例如「2 丈 5 寸」；沒點單位的數字會當作 mm。<br>
+        先點數字，再點單位（丈・尺・寸・分・厘・間・mm・cm・m），連著點會自動相加，例如「2 丈 5 寸」；沒點單位的數字會當作 mm。<br>
+        <b>×√2</b>：曲尺裏目／對角線（方材邊長 × √2 ＝ 對角線）；<b>÷√2</b>：角目（圓材直徑 ÷ √2 ＝ 可取的方材邊長）。<br>
         1 丈 = 10 尺，1 間 = 6 尺（日式）。1 台尺 = 10/33 公尺 ≈ 303.03 mm，與日本的 1 尺相同。<br>
-        點算式中間的位置，可以在那裡插入或修改。要輸入 cm、m 或其他字，請按「改用手機鍵盤」。
+        點算式中間的位置，可以在那裡插入或修改。要輸入其他字，請按「改用手機鍵盤」。
       </p>
     </section>
 
@@ -206,7 +219,7 @@
       </div>
       <div id="roof-err" class="err" role="alert"></div>
       <div id="roof-basic" class="card"></div>
-      <svg id="roof-fig" class="fig" viewBox="0 0 220 130" role="img" aria-label="勾股弦圖"></svg>
+      <div id="roof-fig"></div>
 
       <h2>計算長度</h2>
       <label class="field">
@@ -215,6 +228,7 @@
       </label>
       <div id="roof-a-err" class="err" role="alert"></div>
       <div id="roof-lengths" class="card"></div>
+      <div id="hip-fig"></div>
 
       <h2>椽木逐支遞減 <i class="jp">配付垂木</i></h2>
       <div class="grid2">
@@ -229,6 +243,7 @@
       </div>
       <div id="roof-h-err" class="err" role="alert"></div>
       <div id="roof-haitsuke" class="card"></div>
+      <div id="hai-fig"></div>
       <p class="note">
         公式（水平股 = 10）：椽木斜長 = √(10² + 勾²)；角梁長弦 = √(200 + 勾²)；角梁坡度 = 勾 ÷ √2。
         算出的是理論值，簷口收頭、封簷板等現場加減請另外處理。
@@ -260,8 +275,10 @@
       </div>
       <div id="arc-err" class="err" role="alert"></div>
       <div id="arc-out" class="card"></div>
-      <svg id="arc-fig" class="fig" viewBox="0 0 220 120" role="img" aria-label="弧線示意圖"></svg>
+      <div id="arc-fig"></div>
       <div id="arc-table"></div>
+      <h2>圖解：R、c、h 的關係</h2>
+      <div id="arc-concept"></div>
       <p class="note">
         R = (c²/4 + h²) ÷ 2h。分點高度＝從弦線往弧面量的高度，
         可在弦線上依等分點量出，再用薄板或木條連成弧線。
@@ -282,6 +299,7 @@
       </div>
       <div id="diag-err" class="err" role="alert"></div>
       <div id="diag-out" class="card"></div>
+      <div id="diag-fig"></div>
       <h2>抓直角檢查 <i class="jp">矩出し</i></h2>
       <p class="note" style="margin-top:0">量兩條對角線，長度相同就是直角。</p>
       <div class="grid2">
@@ -296,6 +314,9 @@
       </div>
       <div id="diag-chk-err" class="err" role="alert"></div>
       <div id="diag-chk" class="card"></div>
+      <div id="sq-fig"></div>
+      <h2>3-4-5 法抓直角</h2>
+      <div id="tri-fig"></div>
     </section>
 
     </section><!-- /page-calc -->

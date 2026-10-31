@@ -1,6 +1,11 @@
 import { evalLength, toKenShaku, toTaiShaku, fmtMm, toShaku } from './units.js';
 import { createGlossaryUI } from './glossary-ui.js';
 import { applyKey, softEval } from './keypad.js';
+import { renderFour } from './four.js';
+import {
+  roofSection, hipSection, haitsukePlan, arcFigure, arcConcept, diagFigure, squareCheck, tri345,
+  unitLadder, composition,
+} from './figures.js';
 import {
   roofFromKobai, roofLengths, haitsukeRafters, kobaiFromAngle, kobaiFromRiseRun,
   arcFromChordRise, arcFromChordRadius, arcOffsets, diagonal,
@@ -8,7 +13,7 @@ import {
 
 const $ = (id) => document.getElementById(id);
 const STORE = 'mokusaku.v1';
-const VERSION = '7'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
+const VERSION = '8'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
 
 /* ---------- 儲存（localStorage 可能被擋，全部包 try） ---------- */
 let state = {};
@@ -42,23 +47,42 @@ function readLen(id, errId) {
 /* ---------- 1. 尺貫混算 ---------- */
 let history = Array.isArray(state.history) ? state.history : [];
 
+const luban = state.luban && typeof state.luban === 'object' ? state.luban : {}; // 魯班尺一循環的長度選擇
+let lastMm = null;
+function setFour(mm, partial) {
+  lastMm = mm;
+  renderFour($('four-panel'), mm, {
+    cfg: luban, partial,
+    onCfg: (id, cyc) => { luban[id] = cyc; state.luban = luban; save(); setFour(lastMm, partial); },
+    onApply: (d) => {
+      const el = $('calc-expr');
+      el.value = `${el.value.trim()} ${d > 0 ? '+' : '−'} ${Math.abs(d)}mm`;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    },
+  });
+}
+
 function renderCalc() {
   const out = $('calc-out'), hint = $('calc-hint');
   const r = softEval($('calc-expr').value);
   out.classList.remove('partial');
   hint.textContent = '';
-  if (r.empty) { out.innerHTML = ''; return null; }
+  if (r.empty) { out.innerHTML = ''; $('mix-fig').innerHTML = ''; setFour(null); return null; }
   if (r.error) {
     out.innerHTML = '<div class="err" style="display:block;margin:0"></div>';
     out.firstElementChild.textContent = r.error.message;
+    $('mix-fig').innerHTML = ''; setFour(null);
     return null;
   }
   if (r.incomplete) {
     out.innerHTML = '';
     hint.textContent = r.pending ? '請點單位：丈、尺、寸、分、間、mm' : '請繼續輸入數字';
+    $('mix-fig').innerHTML = ''; setFour(null);
     return null;
   }
   const mm = r.mm;
+  $('mix-fig').innerHTML = composition(mm);
+  setFour(mm, !!r.partial);
   out.innerHTML = `
     <div class="mm">${fmtMm(mm)}<small>mm</small></div>
     <div class="shaku">${toTaiShaku(mm)}</div>
@@ -162,29 +186,30 @@ function roofKobai() {
   }
 }
 
-function drawRoofFig(x) {
-  const fig = $('roof-fig');
-  if (x === null) { fig.innerHTML = ''; return; }
-  const ox = 30, oy = 104;
-  const s = Math.min(140 / 10, 80 / Math.max(x, 0.1));
-  const run = 10 * s, rise = x * s;
-  const gen = Math.sqrt(100 + x * x);
-  const a = Math.atan2(rise, run);
-  fig.innerHTML = `
-    <polygon class="ln" points="${ox},${oy} ${ox + run},${oy} ${ox + run},${oy - rise}"/>
-    <path class="ang" d="M${ox + 34},${oy} A34 34 0 0 0 ${ox + 34 * Math.cos(a)},${oy - 34 * Math.sin(a)}"/>
-    <text x="${ox + run / 2 - 14}" y="${oy + 15}">股 10</text>
-    <text x="${ox + run + 8}" y="${oy - rise / 2 + 4}">勾 ${n(x, 2)}</text>
-    <text x="${ox + run / 2 - 40}" y="${oy - rise / 2 - 8}">弦 ${n(gen, 3)}</text>
-    <text x="${ox + 38}" y="${oy - 4}">${n(Math.atan(x / 10) * 180 / Math.PI, 2)}°</text>`;
-}
-
 function renderRoof() {
-  const x = roofKobai();
-  const basic = $('roof-basic');
-  drawRoofFig(x);
-  if (x === null) { basic.innerHTML = ''; $('roof-lengths').innerHTML = ''; $('roof-haitsuke').innerHTML = ''; return; }
+  const xIn = roofKobai();
+  const sample = xIn === null;              // 還沒輸入坡度：畫示意圖
+  const x = sample ? 4.5 : xIn;
   const r = roofFromKobai(x);
+  const basic = $('roof-basic');
+  const A = readLen('roof-a', 'roof-a-err');
+  const hasA = !sample && A.mm !== undefined && A.mm > 0;
+  const R = hasA ? roofLengths(A.mm, x) : null;
+
+  // 圖：屋頂剖面、角梁（沒有數字時畫示意圖）
+  $('roof-fig').innerHTML = roofSection({
+    x, a: hasA ? A.mm : null, rise: R ? R.rise : null, rafter: R ? R.rafter : null, angleDeg: r.angleDeg, sample });
+  $('hip-fig').innerHTML = hipSection({
+    x, a: hasA ? A.mm : null, planLen: R ? R.hipPlan : null, rise: R ? R.rise : null, hipLen: R ? R.hip : null,
+    hipAngleDeg: r.hip.angleDeg, sample });
+
+  const hBox = $('roof-haitsuke');
+  const hErr = $('roof-h-err');
+  hErr.textContent = '';
+  hBox.innerHTML = '';
+  $('hai-fig').innerHTML = haitsukePlan();   // 預設先畫示意圖，算得出來再換成實際數字
+  if (sample) { basic.innerHTML = ''; $('roof-lengths').innerHTML = ''; return; }
+
   basic.innerHTML =
     plain(L('坡度', '寸勾配'), `${n(x, 3)} 寸`) +
     plain('角度', `${n(r.angleDeg, 3)}°`) +
@@ -192,14 +217,12 @@ function renderRoof() {
     plain(L('椽木伸長率（斜長÷10）', '伸び率'), `${n(r.nobi, 5)}`) +
     plain(L('角梁長弦 √(200+勾²)', '隅木・長玄'), `${n(r.hip.gen, 4)}`) +
     plain(L('角梁伸長率（長弦÷10）', '隅木 伸び率'), `${n(r.hip.nobi, 5)}`) +
-    plain(L('角梁坡度（勾÷√2）', '隅勾配'), `${n(r.hip.kobai, 4)} 寸`) +
+    plain(L('角梁坡度（勾÷√2）', '隅木 勾配'), `${n(r.hip.kobai, 4)} 寸`) +
     plain(L('角梁角度', '隅木'), `${n(r.hip.angleDeg, 3)}°`);
 
   // 長さ
-  const A = readLen('roof-a', 'roof-a-err');
   const lenBox = $('roof-lengths');
-  if (A.mm !== undefined && A.mm > 0) {
-    const R = roofLengths(A.mm, x);
+  if (R) {
     lenBox.innerHTML =
       len('單邊水平長 a', A.mm) + len(L('椽木實長', '垂木'), R.rafter) + len(L('立上高', '立上り'), R.rise) +
       len(L('角梁平面長（a√2）', '隅木'), R.hipPlan) + len(L('角梁實長', '隅木'), R.hip);
@@ -211,67 +234,50 @@ function renderRoof() {
   // 配付垂木
   const P = readLen('roof-pitch', null);
   const F = readLen('roof-first', null);
-  const hBox = $('roof-haitsuke');
-  const hErr = $('roof-h-err');
-  hErr.textContent = '';
-  hBox.innerHTML = '';
   if (P.error || F.error) { hErr.textContent = '椽木間距或第一支椽木水平長的算式有誤'; return; }
   const first = F.mm !== undefined ? F.mm : A.mm;
   if (P.mm !== undefined && first !== undefined) {
     try {
       const h = haitsukeRafters(first, P.mm, x);
-      let rows = h.rows.map((row) => `
+      const rows = h.rows.map((row) => `
         <tr><td>${row.n}</td>
         <td>${fmtMm(row.run)}<small>${toTaiShaku(row.run)}</small></td>
         <td>${fmtMm(row.real)}<small>${toTaiShaku(row.real)}</small></td></tr>`).join('');
       hBox.innerHTML = len(L('每支遞減量（實長）', '減り'), h.decrement) +
         `<table><thead><tr><th>支</th><th>水平長 mm</th><th>實長 mm</th></tr></thead><tbody>${rows}</tbody></table>`;
+      $('hai-fig').innerHTML = haitsukePlan({ first, pitch: P.mm, decrement: h.decrement, count: h.rows.length });
     } catch (e) { hErr.textContent = e.message; }
   }
 }
 
 /* ---------- 3. R・弧 ---------- */
-function drawArcFig(c, h) {
-  const fig = $('arc-fig');
-  if (!(h <= c / 2)) { fig.innerHTML = ''; return; }
-  // 示意圖：實際的弧通常很扁，矢高放大到至少 28px 才看得出來
-  const w = 170;
-  const ht = Math.min(64, Math.max(28, (h / c) * w));
-  const Rs = (w * w / 4 + ht * ht) / (2 * ht);
-  const x0 = 110 - w / 2, y0 = 88;
-  fig.innerHTML = `
-    <path class="ln" d="M${x0},${y0} A${Rs},${Rs} 0 0 1 ${x0 + w},${y0} Z"/>
-    <line class="dim" x1="110" y1="${y0}" x2="110" y2="${y0 - ht}"/>
-    <text x="110" y="${y0 + 15}" text-anchor="middle">弦 c</text>
-    <text x="116" y="${y0 - ht / 2 + 4}">弧高 h</text>
-    <text x="${x0}" y="${y0 - ht - 8}">示意圖（弧高放大）</text>`;
-}
-
 function renderArc() {
   const mode = $('arc-mode').value;
   $('arc-v-label').textContent = mode === 'h' ? '弧高 h' : '半徑 R';
   const out = $('arc-out'), tbl = $('arc-table'), err = $('arc-err');
   out.innerHTML = ''; tbl.innerHTML = ''; err.textContent = '';
+  $('arc-fig').innerHTML = '';              // 概念圖（#arc-concept）永遠顯示在最下面
   const C = readLen('arc-c', null), V = readLen('arc-v', null);
-  if (C.error || V.error) { err.textContent = '算式有誤，請檢查輸入'; $('arc-fig').innerHTML = ''; return; }
-  if (C.mm === undefined || V.mm === undefined) { $('arc-fig').innerHTML = ''; return; }
+  if (C.error || V.error) { err.textContent = '算式有誤，請檢查輸入'; return; }
+  if (C.mm === undefined || V.mm === undefined) return;
   try {
     const a = mode === 'h' ? arcFromChordRise(C.mm, V.mm) : arcFromChordRadius(C.mm, V.mm);
     out.innerHTML = len('弦長 c', a.c) + len(L('弧高 h', '矢高'), a.h) + len('半徑 R', a.R) +
       plain('中心角', `${n(a.thetaDeg, 3)}°`) + len('弧長', a.arc);
-    drawArcFig(a.c, a.h);
     let div = parseInt($('arc-n').value, 10);
     if (!(div >= 2)) div = 8;
     div = Math.min(div, 40);
     if (a.h <= a.c / 2) {
-      const rows = arcOffsets(a.c, a.h, div).map((r) => `
+      const offs = arcOffsets(a.c, a.h, div);
+      $('arc-fig').innerHTML = arcFigure({ c: a.c, h: a.h, R: a.R, thetaDeg: a.thetaDeg, n: div, offsets: offs.map((r) => r.y) });
+      const rows = offs.map((r) => `
         <tr><td>${r.i}</td>
         <td>${fmtMm(r.x)}<small>${toTaiShaku(r.x)}</small></td>
         <td>${fmtMm(r.y)}<small>${toTaiShaku(r.y)}</small></td></tr>`).join('');
       tbl.innerHTML = `<h2>分點高度（弦 ${div} 等分）</h2><div class="card">
         <table><thead><tr><th>點</th><th>從左端 mm</th><th>弧高 mm</th></tr></thead><tbody>${rows}</tbody></table></div>`;
     }
-  } catch (e) { err.textContent = e.message; $('arc-fig').innerHTML = ''; }
+  } catch (e) { err.textContent = e.message; }
 }
 
 /* ---------- 4. 對角線 ---------- */
@@ -279,20 +285,35 @@ function renderDiag() {
   const A = readLen('diag-a', null), B = readLen('diag-b', null);
   const out = $('diag-out'), err = $('diag-err');
   out.innerHTML = ''; err.textContent = '';
+  let figArgs = {};
   if (A.error || B.error) err.textContent = '算式有誤，請檢查輸入';
   else if (A.mm !== undefined && B.mm !== undefined) {
-    try { out.innerHTML = len('對角線', diagonal(A.mm, B.mm)); } catch (e) { err.textContent = e.message; }
+    try {
+      const d = diagonal(A.mm, B.mm);
+      out.innerHTML = len('對角線', d);
+      figArgs = { a: Math.min(A.mm, B.mm), b: Math.max(A.mm, B.mm), d };
+    } catch (e) { err.textContent = e.message; }
   }
+  $('diag-fig').innerHTML = diagFigure(figArgs);
+
   const D1 = readLen('diag-d1', null), D2 = readLen('diag-d2', null);
   const chk = $('diag-chk'), cerr = $('diag-chk-err');
   chk.innerHTML = ''; cerr.textContent = '';
+  let sq = {};
   if (D1.error || D2.error) cerr.textContent = '算式有誤，請檢查輸入';
   else if (D1.mm !== undefined && D2.mm !== undefined) {
     const d = D1.mm - D2.mm;
     chk.innerHTML = len('差（① − ②）', d) +
       plain('判定', Math.abs(d) < 0.5 ? '兩條一致 ✓' : (d > 0 ? '① 較長' : '② 較長'));
+    sq = { d1: D1.mm, d2: D2.mm };
   }
+  $('sq-fig').innerHTML = squareCheck(sq);
 }
+
+// 固定不變的圖：只畫一次
+$('tri-fig').innerHTML = tri345();
+$('mix-ladder').innerHTML = unitLadder();
+$('arc-concept').innerHTML = arcConcept();
 
 /* ---------- 輸入欄位共通：還原 / 儲存 / 更新 ---------- */
 const renderers = {

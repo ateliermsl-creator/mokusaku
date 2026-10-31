@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { evalLength, toKenShaku, toTaiShaku, SHAKU_MM, fmtMm } from '../js/units.js';
+import { evalLength, toKenShaku, toTaiShaku, toShakuRi, SHAKU_MM, fmtMm } from '../js/units.js';
 import {
   roofFromKobai, roofLengths, haitsukeRafters, kobaiFromAngle, kobaiFromRiseRun,
   arcFromChordRise, arcFromChordRadius, arcOffsets, diagonal,
@@ -119,4 +119,21 @@ test('台灣用語：丈・台尺', () => {
   assert.equal(toTaiShaku(evalLength('-5尺')), '−5尺');
   assert.equal(toTaiShaku(0), '0');
   assert.equal(toKenShaku(evalLength('1丈')), '1間4尺'); // 日式顯示不受影響
+});
+
+test('√2 常數與裏目換算', () => {
+  close(evalLength('√2'), Math.SQRT2);
+  close(evalLength('3尺 × √2'), 3 * SHAKU_MM * Math.SQRT2);
+  close(evalLength('1間 ÷ √2'), 6 * SHAKU_MM / Math.SQRT2);
+  close(evalLength('(1尺 + 2寸) × √2'), 1.2 * SHAKU_MM * Math.SQRT2);
+  assert.throws(() => evalLength('3尺 √2'));
+});
+
+test('尺・寸・分・厘 格式', () => {
+  assert.equal(toShakuRi(evalLength('20尺8寸9分6厘')), '20尺8寸9分6厘');
+  assert.equal(toShakuRi(evalLength('2丈8寸9.6分')), '20尺8寸9分6厘');
+  assert.equal(toShakuRi(evalLength('5寸')), '5寸');
+  assert.equal(toShakuRi(0), '0');
+  assert.equal(toShakuRi(evalLength('-3尺')), '−3尺');
+  assert.equal(toShakuRi(evalLength('1厘')), '1厘');
 });
