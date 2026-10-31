@@ -1,4 +1,4 @@
-import { evalLength, toKenShaku, fmtMm, toShaku } from './units.js';
+import { evalLength, toKenShaku, toTaiShaku, fmtMm, toShaku } from './units.js';
 import {
   roofFromKobai, roofLengths, haitsukeRafters, kobaiFromAngle, kobaiFromRiseRun,
   arcFromChordRise, arcFromChordRadius, arcOffsets, diagonal,
@@ -13,9 +13,13 @@ try { state = JSON.parse(localStorage.getItem(STORE)) || {}; } catch { state = {
 function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch { /* ignore */ } }
 
 /* ---------- 顯示小工具 ---------- */
+// 標籤：台灣用語為主，日文為輔
+const L = (zh, jp) => `${zh}${jp ? ` <i class="jp">${jp}</i>` : ''}`;
+// 長度：mm、台尺（丈尺寸分）為主，日式（間尺寸分）為輔
 const len = (label, mm) => `
   <div class="line"><span class="k">${label}</span>
-  <span class="v">${fmtMm(mm)} mm<small>${toKenShaku(mm)}（${toShaku(mm)}尺）</small></span></div>`;
+  <span class="v">${fmtMm(mm)} mm<small>${toTaiShaku(mm)}（${toShaku(mm)}尺）</small>
+  <small class="jp">日式 ${toKenShaku(mm)}</small></span></div>`;
 const plain = (label, text) => `<div class="line"><span class="k">${label}</span><span class="v">${text}</span></div>`;
 const n = (v, d = 3) => `${+v.toFixed(d)}`;
 
@@ -42,8 +46,9 @@ function renderCalc() {
     if (mm === null) { out.innerHTML = ''; return null; }
     out.innerHTML = `
       <div class="mm">${fmtMm(mm)}<small>mm</small></div>
-      <div class="shaku">${toKenShaku(mm)}</div>
-      <div class="shaku2">${toShaku(mm)} 尺　／　${n(mm / 1000, 4)} m</div>`;
+      <div class="shaku">${toTaiShaku(mm)}</div>
+      <div class="shaku2">${toShaku(mm)} 尺　／　${n(mm / 1000, 4)} m</div>
+      <div class="shaku2 jp">日式 ${toKenShaku(mm)}</div>`;
     return mm;
   } catch (e) {
     out.innerHTML = `<div class="err" style="display:block;margin:0"></div>`;
@@ -60,7 +65,7 @@ function renderHistory() {
     b.type = 'button';
     b.innerHTML = `<div class="h-expr"></div><div class="h-res"></div>`;
     b.querySelector('.h-expr').textContent = h.expr;
-    b.querySelector('.h-res').innerHTML = `${fmtMm(h.mm)} mm<em>${toKenShaku(h.mm)}</em>`;
+    b.querySelector('.h-res').innerHTML = `${fmtMm(h.mm)} mm<em>${toTaiShaku(h.mm)}</em>`;
     b.addEventListener('click', () => {
       $('calc-expr').value = h.expr;
       $('calc-expr').dispatchEvent(new Event('input', { bubbles: true }));
@@ -121,9 +126,9 @@ function drawRoofFig(x) {
   fig.innerHTML = `
     <polygon class="ln" points="${ox},${oy} ${ox + run},${oy} ${ox + run},${oy - rise}"/>
     <path class="ang" d="M${ox + 34},${oy} A34 34 0 0 0 ${ox + 34 * Math.cos(a)},${oy - 34 * Math.sin(a)}"/>
-    <text x="${ox + run / 2 - 14}" y="${oy + 15}">殳 10</text>
+    <text x="${ox + run / 2 - 14}" y="${oy + 15}">股 10</text>
     <text x="${ox + run + 8}" y="${oy - rise / 2 + 4}">勾 ${n(x, 2)}</text>
-    <text x="${ox + run / 2 - 40}" y="${oy - rise / 2 - 8}">玄 ${n(gen, 3)}</text>
+    <text x="${ox + run / 2 - 40}" y="${oy - rise / 2 - 8}">弦 ${n(gen, 3)}</text>
     <text x="${ox + 38}" y="${oy - 4}">${n(Math.atan(x / 10) * 180 / Math.PI, 2)}°</text>`;
 }
 
@@ -134,23 +139,23 @@ function renderRoof() {
   if (x === null) { basic.innerHTML = ''; $('roof-lengths').innerHTML = ''; $('roof-haitsuke').innerHTML = ''; return; }
   const r = roofFromKobai(x);
   basic.innerHTML =
-    plain('寸勾配', `${n(x, 3)} 寸`) +
+    plain(L('坡度', '寸勾配'), `${n(x, 3)} 寸`) +
     plain('角度', `${n(r.angleDeg, 3)}°`) +
-    plain('垂木 玄（短玄）', `${n(r.gen, 4)}`) +
-    plain('垂木 伸び率（玄÷10）', `${n(r.nobi, 5)}`) +
-    plain('隅木 長玄 √(200+勾²)', `${n(r.hip.gen, 4)}`) +
-    plain('隅木 伸び率（長玄÷10）', `${n(r.hip.nobi, 5)}`) +
-    plain('隅勾配（勾÷√2）', `${n(r.hip.kobai, 4)} 寸`) +
-    plain('隅木 角度', `${n(r.hip.angleDeg, 3)}°`);
+    plain(L('椽木斜長 √(10²+勾²)', '垂木・玄'), `${n(r.gen, 4)}`) +
+    plain(L('椽木伸長率（斜長÷10）', '伸び率'), `${n(r.nobi, 5)}`) +
+    plain(L('角梁長弦 √(200+勾²)', '隅木・長玄'), `${n(r.hip.gen, 4)}`) +
+    plain(L('角梁伸長率（長弦÷10）', '隅木 伸び率'), `${n(r.hip.nobi, 5)}`) +
+    plain(L('角梁坡度（勾÷√2）', '隅勾配'), `${n(r.hip.kobai, 4)} 寸`) +
+    plain(L('角梁角度', '隅木'), `${n(r.hip.angleDeg, 3)}°`);
 
   // 長さ
   const A = readLen('roof-a', 'roof-a-err');
   const lenBox = $('roof-lengths');
   if (A.mm !== undefined && A.mm > 0) {
-    const L = roofLengths(A.mm, x);
+    const R = roofLengths(A.mm, x);
     lenBox.innerHTML =
-      len('單邊水平長 a', A.mm) + len('垂木 實長', L.rafter) + len('立上り（高さ）', L.rise) +
-      len('隅木 平面長（a√2）', L.hipPlan) + len('隅木 實長', L.hip);
+      len('單邊水平長 a', A.mm) + len(L('椽木實長', '垂木'), R.rafter) + len(L('立上高', '立上り'), R.rise) +
+      len(L('角梁平面長（a√2）', '隅木'), R.hipPlan) + len(L('角梁實長', '隅木'), R.hip);
   } else {
     lenBox.innerHTML = '';
     if (A.mm !== undefined && A.mm <= 0) $('roof-a-err').textContent = '水平長要大於 0';
@@ -163,17 +168,17 @@ function renderRoof() {
   const hErr = $('roof-h-err');
   hErr.textContent = '';
   hBox.innerHTML = '';
-  if (P.error || F.error) { hErr.textContent = '垂木ピッチ或先頭水平長的算式有誤'; return; }
+  if (P.error || F.error) { hErr.textContent = '椽木間距或第一支椽木水平長的算式有誤'; return; }
   const first = F.mm !== undefined ? F.mm : A.mm;
   if (P.mm !== undefined && first !== undefined) {
     try {
       const h = haitsukeRafters(first, P.mm, x);
       let rows = h.rows.map((row) => `
         <tr><td>${row.n}</td>
-        <td>${fmtMm(row.run)}<small>${toKenShaku(row.run)}</small></td>
-        <td>${fmtMm(row.real)}<small>${toKenShaku(row.real)}</small></td></tr>`).join('');
-      hBox.innerHTML = len('每支減り（實長）', h.decrement) +
-        `<table><thead><tr><th>#</th><th>水平長 mm</th><th>實長 mm</th></tr></thead><tbody>${rows}</tbody></table>`;
+        <td>${fmtMm(row.run)}<small>${toTaiShaku(row.run)}</small></td>
+        <td>${fmtMm(row.real)}<small>${toTaiShaku(row.real)}</small></td></tr>`).join('');
+      hBox.innerHTML = len(L('每支遞減量（實長）', '減り'), h.decrement) +
+        `<table><thead><tr><th>支</th><th>水平長 mm</th><th>實長 mm</th></tr></thead><tbody>${rows}</tbody></table>`;
     } catch (e) { hErr.textContent = e.message; }
   }
 }
@@ -191,13 +196,13 @@ function drawArcFig(c, h) {
     <path class="ln" d="M${x0},${y0} A${Rs},${Rs} 0 0 1 ${x0 + w},${y0} Z"/>
     <line class="dim" x1="110" y1="${y0}" x2="110" y2="${y0 - ht}"/>
     <text x="110" y="${y0 + 15}" text-anchor="middle">弦 c</text>
-    <text x="116" y="${y0 - ht / 2 + 4}">矢 h</text>
-    <text x="${x0}" y="${y0 - ht - 8}">示意圖（矢高放大）</text>`;
+    <text x="116" y="${y0 - ht / 2 + 4}">弧高 h</text>
+    <text x="${x0}" y="${y0 - ht - 8}">示意圖（弧高放大）</text>`;
 }
 
 function renderArc() {
   const mode = $('arc-mode').value;
-  $('arc-v-label').textContent = mode === 'h' ? '矢高 h' : '半徑 R';
+  $('arc-v-label').textContent = mode === 'h' ? '弧高 h' : '半徑 R';
   const out = $('arc-out'), tbl = $('arc-table'), err = $('arc-err');
   out.innerHTML = ''; tbl.innerHTML = ''; err.textContent = '';
   const C = readLen('arc-c', null), V = readLen('arc-v', null);
@@ -205,7 +210,7 @@ function renderArc() {
   if (C.mm === undefined || V.mm === undefined) { $('arc-fig').innerHTML = ''; return; }
   try {
     const a = mode === 'h' ? arcFromChordRise(C.mm, V.mm) : arcFromChordRadius(C.mm, V.mm);
-    out.innerHTML = len('弦長 c', a.c) + len('矢高 h', a.h) + len('半徑 R', a.R) +
+    out.innerHTML = len('弦長 c', a.c) + len(L('弧高 h', '矢高'), a.h) + len('半徑 R', a.R) +
       plain('中心角', `${n(a.thetaDeg, 3)}°`) + len('弧長', a.arc);
     drawArcFig(a.c, a.h);
     let div = parseInt($('arc-n').value, 10);
@@ -214,8 +219,8 @@ function renderArc() {
     if (a.h <= a.c / 2) {
       const rows = arcOffsets(a.c, a.h, div).map((r) => `
         <tr><td>${r.i}</td>
-        <td>${fmtMm(r.x)}<small>${toKenShaku(r.x)}</small></td>
-        <td>${fmtMm(r.y)}<small>${toKenShaku(r.y)}</small></td></tr>`).join('');
+        <td>${fmtMm(r.x)}<small>${toTaiShaku(r.x)}</small></td>
+        <td>${fmtMm(r.y)}<small>${toTaiShaku(r.y)}</small></td></tr>`).join('');
       tbl.innerHTML = `<h2>分點高度（弦 ${div} 等分）</h2><div class="card">
         <table><thead><tr><th>點</th><th>從左端 mm</th><th>弧高 mm</th></tr></thead><tbody>${rows}</tbody></table></div>`;
     }
@@ -258,7 +263,7 @@ document.querySelectorAll('main input, main select').forEach((el) => {
 });
 
 /* ---------- 快速輸入按鍵列 ---------- */
-let lastInput = $('calc-expr');
+let lastInput = $('calc-expr'); // 快速鍵列作用的輸入欄
 document.querySelectorAll('input.len').forEach((el) => el.addEventListener('focus', () => { lastInput = el; }));
 $('keys').addEventListener('pointerdown', (e) => {
   const b = e.target.closest('button');
@@ -278,25 +283,82 @@ $('keys').addEventListener('pointerdown', (e) => {
   el.dispatchEvent(new Event('input', { bubbles: true }));
 });
 
-/* ---------- 分頁 ---------- */
-function showTab(name) {
-  document.querySelectorAll('.panel').forEach((p) => { p.hidden = p.id !== `tab-${name}`; });
-  document.querySelectorAll('#tabs button').forEach((b) => {
-    if (b.dataset.tab === name) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+/* ---------- 路由：#/ 首頁、#/calc #/roof #/arc #/diag、#/install ---------- */
+const TOOLS = {
+  calc: ['台尺・公制混算', '尺貫法'],
+  roof: ['屋頂坡度・角梁・椽木', '勾配・隅木・垂木'],
+  arc: ['弧線半徑', 'R・矢高'],
+  diag: ['對角線・抓直角', '矩出し'],
+};
+const PAGES = ['home', 'install', ...Object.keys(TOOLS)];
+
+function route() {
+  const raw = (location.hash.replace(/^#\/?/, '') || 'home').split('/')[0];
+  const name = PAGES.includes(raw) ? raw : 'home';
+  const isTool = name in TOOLS;
+
+  document.querySelectorAll('main > section').forEach((sec) => {
+    sec.hidden = sec.id !== `page-${name}` && sec.id !== `tab-${name}`;
   });
-  const first = document.querySelector(`#tab-${name} input.len`);
-  if (first) lastInput = first;
-  state.tab = name; save();
+  $('topbar').hidden = name === 'home';
+  $('topTitle').textContent = isTool ? TOOLS[name][0] : (name === 'install' ? '加到手機桌面' : '日式大木作工具箱');
+  $('topJp').textContent = isTool ? TOOLS[name][1] : '';
+  $('keys').hidden = !isTool;
+  document.body.classList.toggle('on-tool', isTool);
+  document.title = name === 'home' ? '日式大木作工具箱' : `${$('topTitle').textContent}｜日式大木作工具箱`;
+
+  if (isTool) {
+    const first = document.querySelector(`#tab-${name} input.len`);
+    if (first) lastInput = first;
+    renderers[`tab-${name}`]();
+  }
+  if (name === 'home') renderHome();
+  if (name === 'install') $('inAppWarn').hidden = !inApp();
   window.scrollTo(0, 0);
-  renderers[`tab-${name}`]();
 }
-$('tabs').addEventListener('click', (e) => {
-  const b = e.target.closest('button[data-tab]');
-  if (b) showTab(b.dataset.tab);
+
+const isStandalone = () =>
+  matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const inApp = () => /Line\/|FBAN|FBAV|Instagram|MicroMessenger/i.test(navigator.userAgent);
+
+let updatesLoaded = false;
+async function renderHome() {
+  // 加到桌面提醒
+  let hidden = false;
+  try { hidden = !!localStorage.getItem('installHint'); } catch { /* ignore */ }
+  $('instHint').hidden = isStandalone() || hidden;
+
+  if (updatesLoaded) return;
+  updatesLoaded = true;
+  try {
+    const list = await (await fetch('updates.json')).json();
+    if (!Array.isArray(list) || !list.length) return;
+    $('updDate').textContent = list[0].date;
+    const body = $('updBody');
+    body.textContent = '';
+    for (const u of list) {
+      const d = document.createElement('div');
+      d.className = 'd';
+      d.textContent = u.date;
+      const ul = document.createElement('ul');
+      for (const it of u.items) {
+        const li = document.createElement('li');
+        li.textContent = it;
+        ul.append(li);
+      }
+      body.append(d, ul);
+    }
+    $('updates').hidden = false;
+  } catch { updatesLoaded = false; /* 離線且沒快取時就不顯示 */ }
+}
+$('instHide').addEventListener('click', () => {
+  try { localStorage.setItem('installHint', '1'); } catch { /* ignore */ }
+  $('instHint').hidden = true;
 });
 
+addEventListener('hashchange', route);
 renderHistory();
-showTab(['calc', 'roof', 'arc', 'diag'].includes(state.tab) ? state.tab : 'calc');
+route();
 
 /* ---------- PWA ---------- */
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {

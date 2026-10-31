@@ -1,8 +1,8 @@
 {
-  "name": "木作工具箱 — 大木作・規矩術",
-  "short_name": "木作工具箱",
-  "description": "尺貫法混算、屋根勾配、隅木、配付垂木、R 弧計算。可離線使用。",
-  "lang": "zh-Hant",
+  "name": "日式大木作工具箱",
+  "short_name": "日式大木作",
+  "description": "台尺與公制混算、屋頂坡度、角梁、椽木、弧線半徑計算。可離線使用。",
+  "lang": "zh-Hant-TW",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

@@ -5,7 +5,9 @@
 export const SHAKU_MM = 10000 / 33;
 
 export const UNITS = {
-  '間': SHAKU_MM * 6,
+  '丈': SHAKU_MM * 10, // 台灣傳統：1 丈 = 10 尺
+  '間': SHAKU_MM * 6,  // 日式：1 間 = 6 尺
+  '台尺': SHAKU_MM,
   '尺': SHAKU_MM,
   '寸': SHAKU_MM / 10,
   '分': SHAKU_MM / 100,
@@ -15,7 +17,7 @@ export const UNITS = {
   'm': 1000,
 };
 
-const TOKEN = /\s*(?:(\d+(?:\.\d+)?|\.\d+)|(mm|cm|m|間|尺|寸|分|厘)|([+\-*/()]))/y;
+const TOKEN = /\s*(?:(\d+(?:\.\d+)?|\.\d+)|(mm|cm|m|丈|間|台尺|尺|寸|分|厘)|([+\-*/()]))/y;
 
 function normalize(src) {
   return String(src)
@@ -112,22 +114,27 @@ export function evalLength(src) {
   return v;
 }
 
-/** mm → 「3間2尺5寸4.5分」（四捨五入到 0.1 分） */
-export function toKenShaku(mm) {
+function fmtParts(mm, bigName, bigShaku) {
   if (!Number.isFinite(mm)) return '—';
   const sign = mm < 0 ? '−' : '';
-  let tenth = Math.round((Math.abs(mm) / SHAKU_MM) * 1000); // 單位：0.1 分
-  const ken = Math.floor(tenth / 6000); tenth %= 6000;
+  let tenth = Math.round((Math.abs(mm) / SHAKU_MM) * 1000); // 單位：0.1 分（1 尺 = 1000）
+  const big = Math.floor(tenth / (bigShaku * 1000)); tenth %= bigShaku * 1000;
   const shaku = Math.floor(tenth / 1000); tenth %= 1000;
   const sun = Math.floor(tenth / 100); tenth %= 100;
   const bun = tenth / 10;
   let out = '';
-  if (ken) out += `${ken}間`;
+  if (big) out += `${big}${bigName}`;
   if (shaku) out += `${shaku}尺`;
   if (sun) out += `${sun}寸`;
   if (bun) out += `${bun}分`;
   return out ? sign + out : '0';
 }
+
+/** mm → 台尺「2丈5寸4.5分」（四捨五入到 0.1 分；丈 = 10 尺） */
+export const toTaiShaku = (mm) => fmtParts(mm, '丈', 10);
+
+/** mm → 日式「3間2尺5寸4.5分」（間 = 6 尺） */
+export const toKenShaku = (mm) => fmtParts(mm, '間', 6);
 
 export function fmtMm(mm, digits = 1) {
   if (!Number.isFinite(mm)) return '—';

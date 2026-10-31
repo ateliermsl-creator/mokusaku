@@ -12,7 +12,8 @@
   --bar-ink: #f6f1e8;
   --fig-line: #8a4f1a;
   --fig-fill: rgba(138, 79, 26, .10);
-  --tabs-h: 58px;
+  --hero: #f1e6d2;
+  --hero-line: #e2d2b4;
   --keys-h: 46px;
 }
 @media (prefers-color-scheme: dark) {
@@ -28,6 +29,8 @@
     --err: #ff8a80;
     --fig-line: #e0a45e;
     --fig-fill: rgba(224, 164, 94, .12);
+    --hero: #2a2217;
+    --hero-line: #3d3326;
   }
 }
 
@@ -38,21 +41,30 @@ body {
   background: var(--bg);
   color: var(--ink);
   font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans TC", "Noto Sans JP", "PingFang TC", "Microsoft JhengHei", sans-serif;
-  padding-bottom: calc(var(--tabs-h) + var(--keys-h) + env(safe-area-inset-bottom) + 16px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
 }
+body.on-tool { padding-bottom: calc(var(--keys-h) + env(safe-area-inset-bottom) + 24px); }
 
-.top {
+#topbar {
   position: sticky; top: 0; z-index: 5;
-  display: flex; align-items: baseline; gap: 10px;
-  padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+  display: flex; align-items: center; gap: 10px;
+  padding: calc(8px + env(safe-area-inset-top)) 12px 8px;
   background: var(--bar); color: var(--bar-ink);
 }
-.top h1 { margin: 0; font-size: 18px; letter-spacing: .08em; }
-.top .sub { font-size: 12px; opacity: .7; }
+#topbar[hidden] { display: none; }
+#topbar a {
+  display: grid; place-items: center; flex: none; width: 48px; height: 44px;
+  border-radius: 12px; background: rgba(255, 255, 255, .16); color: inherit;
+}
+#topbar h1 { margin: 0; font-size: 18px; letter-spacing: .06em; }
 
-main { max-width: 640px; margin: 0 auto; padding: 14px 16px 0; }
-.panel[hidden] { display: none; }
+main { max-width: 640px; margin: 0 auto; }
+[hidden] { display: none !important; }
 h2 { font-size: 14px; color: var(--muted); margin: 22px 0 8px; letter-spacing: .04em; }
+
+section.panel { padding: 14px 16px 0; }
+section.panel h3 { font-size: 16px; margin: 18px 0 4px; }
+section.panel ol { margin: 4px 0; padding-left: 22px; }
 
 .field { display: block; margin-bottom: 12px; }
 .field[hidden] { display: none; }
@@ -120,11 +132,11 @@ td small { display: block; color: var(--accent); font-size: 12px; }
 .fig .dim { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; fill: none; }
 .fig .ang { fill: none; stroke: var(--fig-line); stroke-width: 1; }
 
-.hint { font-size: 13px; color: var(--muted); margin-top: 18px; }
+.note { font-size: 13px; color: var(--muted); margin-top: 18px; }
 
 .keys {
-  position: fixed; left: 0; right: 0; bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom)); z-index: 6;
-  height: var(--keys-h);
+  position: fixed; left: 0; right: 0; bottom: 0; padding-bottom: env(safe-area-inset-bottom); z-index: 6;
+  height: calc(var(--keys-h) + env(safe-area-inset-bottom));
   display: flex; gap: 6px; overflow-x: auto; padding: 6px 10px;
   background: var(--surface-2); border-top: 1px solid var(--line);
   scrollbar-width: none;
@@ -137,17 +149,54 @@ td small { display: block; color: var(--accent); font-size: 12px; }
 }
 .keys button:active { background: var(--accent); color: var(--accent-ink); }
 
-.tabs {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 7;
-  height: calc(var(--tabs-h) + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
-  display: grid; grid-template-columns: repeat(4, 1fr);
-  background: var(--bar); color: var(--bar-ink);
+
+/* ---------- 首頁 ---------- */
+.hero {
+  background: var(--hero); border: 1px solid var(--hero-line); border-top: 0;
+  border-radius: 0 0 28px 28px; text-align: center;
+  padding: calc(env(safe-area-inset-top) + 24px) 16px 26px;
 }
-.tabs button {
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-  font: inherit; color: inherit; background: none; border: 0; opacity: .6;
+.hero img { width: 132px; height: 132px; border-radius: 30px; box-shadow: 0 6px 18px rgba(42, 33, 24, .25); }
+.hero h1 { margin: 12px 0 2px; font-size: 30px; letter-spacing: .08em; color: var(--accent); }
+.hero p { margin: 0; color: var(--muted); font-size: 15px; }
+
+.tool {
+  display: flex; align-items: center; gap: 14px;
+  margin: 12px; padding: 14px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+  color: inherit; text-decoration: none;
 }
-.tabs b { font-size: 20px; line-height: 1; }
-.tabs i { font-style: normal; font-size: 11px; }
-.tabs button[aria-current="page"] { opacity: 1; box-shadow: inset 0 3px 0 #e0a45e; }
+.tool:active { background: var(--surface-2); }
+.tool .ph {
+  flex: none; width: 56px; height: 56px; border-radius: 14px;
+  display: grid; place-items: center; font-size: 28px; line-height: 1;
+  background: var(--surface-2); color: var(--accent);
+}
+.tool b { display: block; font-size: 19px; }
+.tool small { color: var(--muted); font-size: 14px; }
+.tool .arrow { margin-left: auto; color: var(--accent); font-size: 26px; }
+.tool.soon { border-style: dashed; background: transparent; color: var(--muted); }
+
+.hint {
+  margin: 12px; padding: 12px 14px; font-size: 14px;
+  background: #fff3cd; color: #6b5200; border-radius: 12px;
+}
+.hint a { color: inherit; font-weight: 700; }
+.hint button { min-height: 34px; margin-left: 8px; padding: 0 12px; font: inherit; font-size: 14px; border: 0; border-radius: 10px; background: rgba(0, 0, 0, .08); color: inherit; }
+@media (prefers-color-scheme: dark) { .hint { background: #4a3b10; color: #ffe9a6; } }
+
+details.panel { margin: 12px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; }
+details.panel summary { cursor: pointer; }
+details.panel small { color: var(--muted); }
+details.panel .d { margin-top: 12px; color: var(--accent); font-weight: 700; }
+details.panel ul { margin: 4px 0; padding-left: 22px; font-size: 14px; }
+
+/* 日文輔助字：台灣用語為主，日文放旁邊用小字 */
+.jp { font-style: normal; font-weight: 400; font-size: .78em; color: var(--muted); margin-left: .25em; letter-spacing: 0; }
+#topbar .jp { color: var(--bar-ink); opacity: .65; font-size: 12px; }
+#topbar h1 { font-size: 17px; line-height: 1.25; }
+.hero p.jp { margin: 2px 0 0; font-size: 13px; }
+.tool b .jp, .line .k .jp, h2 .jp { font-size: 12px; }
+.line .v small.jp { display: block; color: var(--muted); }
+.result .shaku2.jp { font-size: 13px; }
+.tool b .jp { white-space: nowrap; }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { evalLength, toKenShaku, SHAKU_MM, fmtMm } from '../js/units.js';
+import { evalLength, toKenShaku, toTaiShaku, SHAKU_MM, fmtMm } from '../js/units.js';
 import {
   roofFromKobai, roofLengths, haitsukeRafters, kobaiFromAngle, kobaiFromRiseRun,
   arcFromChordRise, arcFromChordRadius, arcOffsets, diagonal,
@@ -107,4 +107,16 @@ test('弧的分點高度', () => {
 test('對角線', () => {
   close(diagonal(3, 4), 5);
   close(diagonal(3 * SHAKU_MM, 4 * SHAKU_MM), 5 * SHAKU_MM);
+});
+
+test('台灣用語：丈・台尺', () => {
+  close(evalLength('1丈'), 10 * SHAKU_MM);
+  close(evalLength('2丈5寸'), 20.5 * SHAKU_MM);
+  close(evalLength('1台尺'), SHAKU_MM);
+  close(evalLength('1丈2尺3寸'), 12.3 * SHAKU_MM);
+  assert.equal(toTaiShaku(evalLength('3間2尺5寸')), '2丈5寸'); // 20.5 尺
+  assert.equal(toTaiShaku(evalLength('1丈2尺3寸4分')), '1丈2尺3寸4分');
+  assert.equal(toTaiShaku(evalLength('-5尺')), '−5尺');
+  assert.equal(toTaiShaku(0), '0');
+  assert.equal(toKenShaku(evalLength('1丈')), '1間4尺'); // 日式顯示不受影響
 });
