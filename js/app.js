@@ -14,7 +14,7 @@ import {
 
 const $ = (id) => document.getElementById(id);
 const STORE = 'mokusaku.v1';
-const VERSION = '10'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
+const VERSION = '11'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
 
 /* ---------- 儲存（localStorage 可能被擋，全部包 try） ---------- */
 let state = {};
@@ -32,11 +32,20 @@ const len = (label, mm) => `
 const plain = (label, text) => `<div class="line"><span class="k">${label}</span><span class="v">${text}</span></div>`;
 const n = (v, d = 3) => `${+v.toFixed(d)}`;
 
+/**
+ * 長度欄位 = 「數字」＋「單位下拉」。只打數字時，單位取自下拉選單；
+ * 如果欄位裡已經寫了完整算式（例如 3尺5寸），就直接照算式算。
+ */
+function lenExpr(id) {
+  const t = $(id).value.trim();
+  const u = $(`${id}-u`);
+  return u && /^[\d.]+$/.test(t) ? `${t}${u.value}` : t;
+}
+
 /** 嘗試解析長度欄位：回傳 {mm} 或 {error} 或 {} (空) */
 function readLen(id, errId) {
-  const el = $(id);
   try {
-    const mm = evalLength(el.value);
+    const mm = evalLength(lenExpr(id));
     if (errId) $(errId).textContent = '';
     return mm === null ? {} : { mm };
   } catch (e) {
@@ -205,8 +214,8 @@ function roofKobai() {
       const v = parseFloat($('roof-angle').value);
       return Number.isFinite(v) ? kobaiFromAngle(v) : null;
     }
-    const rise = evalLength($('roof-rise').value);
-    const run = evalLength($('roof-run').value);
+    const rise = evalLength(lenExpr('roof-rise'));
+    const run = evalLength(lenExpr('roof-run'));
     if (rise === null || run === null) return null;
     return kobaiFromRiseRun(rise, run);
   } catch (e) {
@@ -386,27 +395,6 @@ document.querySelectorAll('main input, main select').forEach((el) => {
   });
 });
 
-/* ---------- 快速輸入按鍵列 ---------- */
-let lastInput = $('calc-expr'); // 快速鍵列作用的輸入欄
-document.querySelectorAll('input.len').forEach((el) => el.addEventListener('focus', () => { lastInput = el; }));
-$('keys').addEventListener('pointerdown', (e) => {
-  const b = e.target.closest('button');
-  if (!b) return;
-  e.preventDefault(); // 不讓輸入欄失去焦點（手機鍵盤不會收起來）
-  const el = lastInput;
-  if (!el || el.offsetParent === null) return;
-  el.focus();
-  const s = el.selectionStart ?? el.value.length;
-  const t = el.selectionEnd ?? s;
-  if (b.dataset.act === 'bs') {
-    const from = s === t ? Math.max(0, s - 1) : s;
-    el.setRangeText('', from, t, 'end');
-  } else {
-    el.setRangeText(b.dataset.ins, s, t, 'end');
-  }
-  el.dispatchEvent(new Event('input', { bubbles: true }));
-});
-
 /* ---------- 路由 ----------
    #/ 首頁　#/install 安裝教學
    #/calc[/mix|roof|arc|diag] 木作計算機（四個分頁；沒寫分頁就開上次用的）
@@ -441,17 +429,10 @@ function route() {
   $('subtabs').hidden = !isCalc;
   $('topTitle').textContent = title;
   $('topJp').textContent = isCalc ? '電卓' : '';
-  const showKeys = isCalc && sub !== 'mix' && sub !== 'luban'; // 台尺混算與魯班尺用面板內的按鍵，其他分頁用底部快速鍵列
-  $('keys').hidden = !showKeys;
-  document.body.classList.toggle('on-tool', showKeys);
   document.title = page === 'home' ? '日式大木作工具箱'
     : `${isCalc ? CALC_TABS[sub] : title}｜日式大木作工具箱`;
 
-  if (isCalc) {
-    const first = document.querySelector(`#tab-${sub} input.len`);
-    if (first) lastInput = first;
-    renderers[`tab-${sub}`]();
-  }
+  if (isCalc) renderers[`tab-${sub}`]();
   if (page === 'home') renderHome();
   if (page === 'install') $('inAppWarn').hidden = !inApp();
   if (page === 'glossary') glossary.render();
