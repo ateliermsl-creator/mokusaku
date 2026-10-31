@@ -16,7 +16,7 @@ import {
 
 const $ = (id) => document.getElementById(id);
 const STORE = 'mokusaku.v1';
-const VERSION = '28'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
+const VERSION = '29'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
 
 /* ---------- 儲存（localStorage 可能被擋，全部包 try） ---------- */
 let state = {};
@@ -499,13 +499,13 @@ function route() {
   const title = isCalc ? '木作計算機'
     : page === 'install' ? '加到手機桌面'
       : page === 'joint' ? '仕口・継手 比例速查'
-      : page === 'glossary' ? '台日大木作名詞＆構架對照庫' : '日式大木作工具箱';
+      : page === 'glossary' ? '台日大木作名詞＆構架對照庫' : '柴柴木作';
   $('topbar').hidden = page === 'home';
   $('subtabs').hidden = !isCalc;
   $('topTitle').textContent = title;
   $('topJp').textContent = isCalc ? '電卓' : '';
-  document.title = page === 'home' ? '日式大木作工具箱'
-    : `${isCalc ? CALC_TABS[sub] : title}｜日式大木作工具箱`;
+  document.title = page === 'home' ? '柴柴木作｜日式大木作工具箱'
+    : `${isCalc ? CALC_TABS[sub] : title}｜柴柴木作`;
 
   closeSheet();
   if (isCalc) renderers[`tab-${sub}`]();

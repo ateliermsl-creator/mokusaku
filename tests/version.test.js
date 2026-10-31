@@ -64,3 +64,11 @@ test('不放版權聲明頁尾', () => {
   assert.ok(!html.includes('id="copyright"') && !html.includes('版權所有') && !html.includes('logo-wenzi'));
   assert.ok(!existsSync(join(root, 'icons/logo-wenzi.png')));
 });
+
+test('App 名稱統一為「柴柴木作」（網頁標題、桌面名稱、manifest）', () => {
+  const html = read('index.html'), man = JSON.parse(read('manifest.webmanifest'));
+  assert.equal(man.name, '柴柴木作'); assert.equal(man.short_name, '柴柴木作');
+  assert.ok(/<title>柴柴木作/.test(html) && html.includes('apple-mobile-web-app-title" content="柴柴木作"'));
+  assert.ok(html.includes('<h1>柴柴木作</h1>') && html.includes('id="topTitle">柴柴木作<'));
+  assert.ok(!/<title>日式大木作工具箱/.test(html));
+});

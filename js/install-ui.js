@@ -1,8 +1,8 @@
 // 加到手機桌面（安裝教學）：內容與流程比照「三星蔥工具箱」。
 // 依裝置自動顯示 iPhone／Android 步驟、偵測 LINE／Facebook 內建瀏覽器、Android 可一鍵安裝。
 const $ = (id) => document.getElementById(id);
-const APP = '日式大木作工具箱';   // 加到桌面時預設的名稱是 manifest 的 name
-const ICON = '日式大木作圖示';
+const APP = '柴柴木作';   // 加到桌面時預設的名稱是 manifest 的 name
+const ICON = '柴柴木作圖示';
 
 export const inAppName = () => {
   const ua = navigator.userAgent;
