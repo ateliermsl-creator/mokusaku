@@ -83,3 +83,23 @@ test('分享預覽（LINE／Facebook）：有 og 標籤，圖片是完整網址�
   assert.equal(buf.readUInt32BE(16), 1200); assert.equal(buf.readUInt32BE(20), 630);
   assert.ok(buf.length < 600 * 1024, '預覽圖不要太大（LINE 抓圖有大小限制）');
 });
+
+test('安全：有內容安全政策（CSP），不允許 eval 與外部來源；外部連結都有 noopener', () => {
+  const html = read('index.html');
+  const csp = /http-equiv="Content-Security-Policy" content="([^"]+)"/.exec(html)?.[1];
+  assert.ok(csp, '缺少 CSP');
+  for (const need of ["default-src 'self'", "script-src 'self'", "object-src 'none'", "base-uri 'none'", "form-action 'none'", "connect-src 'self'"]) assert.ok(csp.includes(need), `CSP 缺少 ${need}`);
+  assert.ok(!/unsafe-eval|unsafe-inline.*script-src|https?:\/\//.test(csp.replace(/style-src[^;]*;/, '')), 'CSP 不該允許 eval、行內腳本或外部網址');
+  assert.ok(!/<script(?![^>]*\bsrc=)[^>]*>/i.test(html), 'index.html 不該有行內 <script>');
+  assert.ok(!/\son(click|error|load|input|change)=/i.test(html), 'index.html 不該有行內事件屬性');
+});
+
+test('安全：程式裡沒有 eval／new Function，也沒有對外連線', async () => {
+  const { readdirSync } = await import('node:fs');
+  for (const f of readdirSync(join(root, 'js')).filter((x) => x.endsWith('.js'))) {
+    const src = read(`js/${f}`);
+    assert.ok(!/\beval\s*\(|new Function\s*\(/.test(src), `${f}: 不該用 eval／new Function`);
+    assert.ok(!/\bfetch\s*\(|XMLHttpRequest|WebSocket|sendBeacon|window\.open/.test(src), `${f}: 不該有對外連線或開新視窗的呼叫`);
+  }
+  for (const m of read('sw.js').matchAll(/https?:\/\/[^\s'"`]+/g)) assert.fail(`sw.js 不該有外部網址：${m[0]}`);
+});

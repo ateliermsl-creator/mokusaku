@@ -65,4 +65,23 @@ export function makeCustom({ ja, kana, tw, note }, now = Date.now()) {
   };
 }
 
+/** 讀取已存的自訂詞條：只保留文字欄位，其餘（連結、來源、警示…）一律丟掉，避免被竄改的資料進入畫面 */
+export function sanitizeCustom(list) {
+  if (!Array.isArray(list)) return [];
+  const out = [];
+  for (const o of list.slice(0, 500)) {
+    if (!o || typeof o !== 'object') continue;
+    try {
+      const c = makeCustom({
+        ja: String(o.ja ?? '').slice(0, 100), kana: String(o.kana ?? '').slice(0, 100),
+        tw: (Array.isArray(o.tw) ? o.tw : []).map((x) => String(x).slice(0, 100)).join('、'),
+        note: String(o.note ?? '').slice(0, 1000),
+      });
+      c.id = /^u[0-9a-z]{3,40}$/.test(String(o.id)) ? o.id : c.id;
+      out.push(c);
+    } catch { /* 不合格的略過 */ }
+  }
+  return out;
+}
+
 export { TERMS, CATEGORIES };

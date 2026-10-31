@@ -4,6 +4,7 @@ import { applyKey, softEval } from './keypad.js';
 import { renderFour } from './four.js';
 import { renderLuban, renderLubanSummary } from './luban-ui.js';
 import { renderJointPage } from './joint-ui.js';
+import { JOINTS } from './joints.js';
 import { renderInstall, showInAppBanner, inAppName, isStandalone } from './install-ui.js';
 import {
   roofSection, hipSection, haitsukePlan, arcFigure, arcConcept, diagFigure, squareCheck, tri345,
@@ -16,7 +17,7 @@ import {
 
 const $ = (id) => document.getElementById(id);
 const STORE = 'mokusaku.v1';
-const VERSION = '30'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
+const VERSION = '31'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
 
 /* ---------- 儲存（localStorage 可能被擋，全部包 try） ---------- */
 let state = {};
@@ -47,7 +48,8 @@ function readLen(id, errId) {
 }
 
 /* ---------- 1. 尺貫混算 ---------- */
-let history = Array.isArray(state.history) ? state.history : [];
+let history = (Array.isArray(state.history) ? state.history : [])
+  .filter((x) => x && typeof x.expr === 'string' && x.expr.length <= 300 && Number.isFinite(x.mm)).slice(0, 30);   // 讀取時檢查型別，避免被竄改的內容進入畫面
 
 const luban = state.luban && typeof state.luban === 'object' ? state.luban : {}; // 魯班尺一循環的長度選擇（魯班尺分頁用）
 function setFour(mm, partial) { renderFour($('four-panel'), mm, { partial }); }
@@ -95,9 +97,10 @@ function renderHistory() {
     const li = document.createElement('li');
     const b = document.createElement('button');
     b.type = 'button';
-    b.innerHTML = `<div class="h-expr"></div><div class="h-res"></div>`;
-    b.querySelector('.h-expr').textContent = h.expr;
-    b.querySelector('.h-res').innerHTML = `${fmtMm(h.mm)} mm<em>${toTaiShaku(h.mm)}</em>`;
+    const ex = document.createElement('div'), rs = document.createElement('div'), em = document.createElement('em');
+    ex.className = 'h-expr'; rs.className = 'h-res';
+    ex.textContent = h.expr; em.textContent = toTaiShaku(h.mm); rs.append(`${fmtMm(h.mm)} mm`, em);
+    b.append(ex, rs);
     b.addEventListener('click', () => {
       $('calc-expr').value = h.expr;
       $('calc-expr').dispatchEvent(new Event('input', { bubbles: true }));
@@ -495,7 +498,7 @@ function route() {
     if (a.dataset.sub === sub && isCalc) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   });
 
-  if (page === 'joint' && sub) { state.jointId = sub; save(); }
+  if (page === 'joint' && JOINTS.some((j) => j.id === sub)) { state.jointId = sub; save(); }   // 網址上的值要在已知清單內才存
   const title = isCalc ? '木作計算機'
     : page === 'install' ? '加到手機桌面'
       : page === 'joint' ? '仕口・継手 比例速查'

@@ -194,3 +194,19 @@ test('洋小屋圖含吊束（吊鞍），並與詞庫對應', () => {
   assert.ok(yo.explain.points.some((p) => p.includes('正同柱') && p.includes('人字大料') && p.includes('腰支斜角撐')));
   assert.ok(COMPARE.rows.some((r) => r[0].includes('穩定') && r[1].includes('沒有斜撐')));
 });
+
+import { sanitizeCustom } from '../js/glossary-search.js';
+test('讀取已存的自訂詞條：只留文字欄位，連結、來源、警示等一律丟掉', () => {
+  const evil = '<img src=x onerror=alert(1)>';
+  const out = sanitizeCustom([
+    { id: '"><script>', ja: '野垂木', kana: 'のだるき', tw: ['暗椽'], note: evil, src: 'javascript:alert(1)', links: [{ label: 'x', href: 'javascript:alert(2)' }], warn: evil, conf: 'v', cat: '樑・桁' },
+    null, 'str', 5, { ja: '', tw: ['x'] }, { ja: 'x', tw: [] },
+  ]);
+  assert.equal(out.length, 1);
+  const c = out[0];
+  assert.equal(c.conf, 'u'); assert.equal(c.cat, '我的詞條'); assert.equal(c.src, ''); assert.deepEqual(c.links, []); assert.equal(c.warn, '');
+  assert.match(c.id, /^u[0-9a-z]+$/, '不合格的 id 要換掉');
+  assert.equal(c.note, evil, '文字原樣保留（顯示時一律用 textContent，不會被當成 HTML）');
+  assert.deepEqual(sanitizeCustom('not an array'), []);
+  assert.ok(sanitizeCustom(Array.from({ length: 2000 }, (_, i) => ({ ja: `a${i}`, tw: ['b'] }))).length <= 500);
+});

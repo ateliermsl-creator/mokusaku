@@ -1,6 +1,6 @@
 // 台日大木作名詞＆構架對照庫：介面。所有文字一律用 textContent，避免自訂詞條帶入 HTML。
 import { TERMS, CATEGORIES, CONF } from './glossary.js';
-import { search, makeCustom } from './glossary-search.js';
+import { search, makeCustom, sanitizeCustom } from './glossary-search.js';
 import { DIAGRAMS, COMPARE, renderDiagramSvg } from './diagrams.js';
 import { h } from './dom.js';
 
@@ -20,7 +20,7 @@ const DIR_PLACEHOLDER = {
 export function createGlossaryUI({ state, save }) {
   let dir = 'all', cat = '', tab = state.glossTab === 'frame' ? 'frame' : 'terms';
   let dgId = DIAGRAMS.some((d) => d.id === state.glossDiagram) ? state.glossDiagram : DIAGRAMS[0].id;
-  let custom = Array.isArray(state.terms) ? state.terms : [];
+  let custom = sanitizeCustom(state.terms);
   let selectedPart = '';
   let wired = false;
 
@@ -66,7 +66,7 @@ export function createGlossaryUI({ state, save }) {
     for (const l of t.links || []) {
       acts.append(l.disabled
         ? h('span', { class: 'btnlink dis', text: l.label })
-        : h('a', { class: 'btnlink', href: l.href, text: `🧮 ${l.label}` }));
+        : h('a', { class: 'btnlink', href: /^#\//.test(l.href) ? l.href : '#/', text: `🧮 ${l.label}` }));
     }
     if (/^https?:\/\//.test(t.src)) acts.append(h('a', { class: 'btnlink ghost', href: t.src, target: '_blank', rel: 'noopener noreferrer', text: '📎 查看來源' }));
     else if (t.src) card.append(h('div', { class: 'cite', text: `📖 出處：${t.src}` }));
