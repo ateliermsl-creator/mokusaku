@@ -450,18 +450,3 @@ a.chip { display: inline-flex; align-items: center; text-decoration: none; }
 .jt3d-bar .sec[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .jt3d-cut { display: flex; align-items: center; gap: 8px; flex: 1 1 140px; font-size: 14px; }
 .jt3d-cut input { flex: 1; min-width: 80px; }
-
-/* 我的 3D 模型 */
-.md-add { display: flex; align-items: center; justify-content: center; cursor: pointer; text-align: center; border: 0; border-radius: 12px; background: var(--accent); color: var(--accent-ink); }
-.md-items { list-style: none; margin: 8px 0; padding: 0; }
-.md-items li { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
-.md-items li.on .md-name { border-color: var(--accent); }
-.md-name { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; font: inherit; text-align: left; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
-.md-name b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.md-name small { color: var(--muted); }
-.md-del { margin: 0; min-height: 40px; }
-.jt3d-axes { display: flex; flex-wrap: wrap; gap: 8px; }
-.jt3d-axes .sec { margin: 0; min-height: 40px; }
-.jt3d-axes .sec[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-.err.bad { color: #c0392b; }
-@media (prefers-color-scheme: dark) { .err.bad { color: #ff9b8f; } }

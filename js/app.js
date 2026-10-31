@@ -4,7 +4,6 @@ import { applyKey, softEval } from './keypad.js';
 import { renderFour } from './four.js';
 import { renderLuban, renderLubanSummary } from './luban-ui.js';
 import { renderJointPage } from './joint-ui.js';
-import { renderModelPage } from './model-ui.js';
 import { renderInstall, showInAppBanner, inAppName, isStandalone } from './install-ui.js';
 import {
   roofSection, hipSection, haitsukePlan, arcFigure, arcConcept, diagFigure, squareCheck, tri345,
@@ -17,7 +16,7 @@ import {
 
 const $ = (id) => document.getElementById(id);
 const STORE = 'mokusaku.v1';
-const VERSION = '22'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
+const VERSION = '23'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
 
 /* ---------- 儲存（localStorage 可能被擋，全部包 try） ---------- */
 let state = {};
@@ -474,7 +473,7 @@ document.querySelectorAll('main input, main select').forEach((el) => {
    #/calc[/mix|roof|arc|diag] 木作計算機（四個分頁；沒寫分頁就開上次用的）
    舊網址 #/roof #/arc #/diag 會自動導到 #/calc/… */
 const CALC_TABS = { mix: '台尺混算', roof: '屋頂坡度', arc: '弧線半徑', diag: '對角線', luban: '魯班尺' };
-const PAGES = ['home', 'install', 'calc', 'glossary', 'joint', 'model'];
+const PAGES = ['home', 'install', 'calc', 'glossary', 'joint'];
 const glossary = createGlossaryUI({ state, save });
 const LEGACY = ['roof', 'arc', 'diag'];
 
@@ -500,7 +499,6 @@ function route() {
   const title = isCalc ? '木作計算機'
     : page === 'install' ? '加到手機桌面'
       : page === 'joint' ? '仕口・継手 比例速查'
-      : page === 'model' ? '我的 3D 模型'
       : page === 'glossary' ? '台日大木作名詞＆構架對照庫' : '日式大木作工具箱';
   $('topbar').hidden = page === 'home';
   $('subtabs').hidden = !isCalc;
@@ -516,7 +514,6 @@ function route() {
   showInAppBanner();
   if (page === 'glossary') glossary.render();
   if (page === 'joint') renderers['page-joint']();
-  if (page === 'model') renderModelPage($);
   window.scrollTo(0, 0);
 }
 
@@ -532,6 +529,7 @@ $('instHide').addEventListener('click', () => {
   $('instHint').hidden = true;
 });
 
+try { if (typeof indexedDB !== 'undefined') indexedDB.deleteDatabase('mokusaku-models'); } catch { /* ignore */ }   // 已移除「我的 3D 模型」，順手清掉舊資料
 addEventListener('hashchange', route);
 renderHistory();
 route();
