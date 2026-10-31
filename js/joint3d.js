@@ -2,6 +2,7 @@
 // 只在有變化時才重繪，閒置時不耗電。
 import * as THREE from '../lib/three.module.min.js';
 import { jointModel } from './joint3d-geom.js';
+import { attachOrbit } from './orbit.js';
 
 const COL = { a: 0xb5a199, b: 0xc6cbd0, pin: 0x8a5a2b, edge: 0x4a3f3a, hole: 0x8a5a2b };
 
@@ -104,27 +105,7 @@ export function createViewer(host, id, D) {
   }
   function requestRender() { if (!raf && !disposed) raf = requestAnimationFrame(frame); }
 
-  // ── 操作：單指旋轉、雙指縮放、滾輪縮放、雙擊重置 ──
-  const el = renderer.domElement, ptrs = new Map();
-  let last = null, pinch0 = 0, dist0 = 0;
-  const clampEl = (v) => Math.max(-1.45, Math.min(1.45, v));
-  const clampDist = (v) => Math.max(baseDist * 0.3, Math.min(baseDist * 3, v));
-  el.addEventListener('pointerdown', (e) => { el.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]); last = [e.clientX, e.clientY]; if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch0 = Math.hypot(a[0] - b[0], a[1] - b[1]); dist0 = view.dist; } });
-  el.addEventListener('pointermove', (e) => {
-    if (!ptrs.has(e.pointerId)) return;
-    ptrs.set(e.pointerId, [e.clientX, e.clientY]);
-    if (ptrs.size === 2) {
-      const [a, b] = [...ptrs.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
-      if (pinch0 > 0) view.dist = clampDist(dist0 * pinch0 / d);
-    } else if (last) {
-      view.az -= (e.clientX - last[0]) * 0.008; view.el = clampEl(view.el + (e.clientY - last[1]) * 0.008);
-    }
-    last = [e.clientX, e.clientY]; dirty = true; requestRender();
-  });
-  const up = (e) => { ptrs.delete(e.pointerId); last = ptrs.size === 1 ? [...ptrs.values()][0] : null; };
-  el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
-  el.addEventListener('wheel', (e) => { e.preventDefault(); view.dist = clampDist(view.dist * Math.exp(e.deltaY * 0.0012)); dirty = true; requestRender(); }, { passive: false });
-  el.addEventListener('dblclick', () => preset('iso'));
+  attachOrbit(renderer.domElement, view, { getBase: () => baseDist, onChange: () => { dirty = true; requestRender(); }, onReset: () => preset('iso') });
 
   const PRESETS = { iso: [-0.55, 0.5], plan: [0, Math.PI / 2 - 0.001], side: [0, 0] };
   function preset(name) { const [az, e] = PRESETS[name] || PRESETS.iso; view.az = az; view.el = e; view.dist = baseDist; dirty = true; requestRender(); }

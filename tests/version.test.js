@@ -49,3 +49,12 @@ test('首頁不放「最新更新」：沒有面板、沒有更新紀錄檔、�
   assert.ok(!read('sw.js').includes('updates.json'));
   assert.ok(!/updates\.json|updBody|updDate/.test(read('js/app.js')));
 });
+
+test('js/、lib/ 底下的每個檔案都在 ASSETS 裡（動態 import 的檔案也要能離線）', async () => {
+  const { readdirSync } = await import('node:fs');
+  const list = /const ASSETS = \[([\s\S]*?)\];/.exec(read('sw.js'))[1];
+  const assets = new Set([...list.matchAll(/'([^']+)'/g)].map((m) => m[1]));
+  for (const dir of ['js', 'lib']) for (const f of readdirSync(join(root, dir))) {
+    if (f.endsWith('.js')) assert.ok(assets.has(`${dir}/${f}`), `${dir}/${f} 不在 sw.js 的 ASSETS 裡`);
+  }
+});
