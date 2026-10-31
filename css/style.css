@@ -440,3 +440,13 @@ a.chip { display: inline-flex; align-items: center; text-decoration: none; }
 @media (prefers-color-scheme: dark) { .note-warn, #iab { background: #3b2610; border-color: #8a5a2b; color: #ffcf9e; } }
 .sec { min-height: 36px; margin-top: 6px; padding: 0 12px; font: inherit; font-size: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); }
 #instNow { min-height: 46px; font: inherit; font-size: 16px; font-weight: 700; border: 0; border-radius: 12px; background: var(--accent); color: var(--accent-ink); }
+
+/* 3D 旋轉檢視 */
+#jt-3d { margin: 10px 0; }
+.jt3d-open { width: 100%; min-height: 46px; font-size: 16px; font-weight: 700; margin: 0; }
+.jt3d-host { width: 100%; height: min(62vh, 380px); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.jt3d-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0 0; }
+.jt3d-bar .sec { margin: 0; min-height: 40px; }
+.jt3d-bar .sec[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.jt3d-cut { display: flex; align-items: center; gap: 8px; flex: 1 1 140px; font-size: 14px; }
+.jt3d-cut input { flex: 1; min-width: 80px; }

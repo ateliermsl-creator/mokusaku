@@ -5,6 +5,47 @@ import { fmtMm } from './units.js';
 
 const SRC = '《古蹟木作修復技術》V-2「日式木構造與修復」圖 17（木地檻接合工法）';
 
+let viewer = null;          // 目前開著的 3D 檢視器
+let viewerHostId = '';
+
+function mount3d($, id, D) {
+  const box = $('jt-3d');
+  if (id !== 'oikake') {
+    if (viewer) { viewer.dispose(); viewer = null; }
+    box.dataset.id = id; box.textContent = '';
+    box.append(h('p', { class: 'jt-src', text: '🧊 3D 旋轉檢視目前只做了追掛大栓継ぎ；鎌継ぎ、腰掛蟻継ぎ之後再加。' }));
+    return;
+  }
+  if (box.dataset.id === id && box.firstChild) { if (viewer) viewer.update(D); return; }
+  box.dataset.id = id; box.textContent = '';
+  const open = h('button', { type: 'button', class: 'sec jt3d-open', text: '🧊 開啟 3D 旋轉檢視' });
+  open.addEventListener('click', async () => {
+    open.disabled = true; open.textContent = '載入 3D…';
+    try {
+      const m = await import('./joint3d.js');
+      if (!m.webglOk()) throw new Error('webgl');
+      box.textContent = '';
+      const host = h('div', { class: 'jt3d-host', role: 'img', 'aria-label': '追掛大栓継ぎ 3D 模型，可拖曳旋轉' });
+      const bar = h('div', { class: 'jt3d-bar' });
+      box.append(host, bar, h('p', { class: 'jt-src', text: '單指拖曳旋轉・雙指縮放・點兩下回到立體視角。兩根材的斷面皆為 D×D；深色方框是栓孔位置，栓孔本身未建模（拆開後只看得到孔位的框線）。界線的小斜度與栓的位置為依圖面目測。' }));
+      viewer = m.createViewer(host, currentD());
+      viewerHostId = id;
+      const btn = (t, f) => h('button', { type: 'button', class: 'sec', text: t, onclick: f });
+      let ex = false;
+      const exBtn = btn('拆開', () => { ex = !ex; viewer.setExplode(ex); exBtn.textContent = ex ? '合起來' : '拆開'; exBtn.setAttribute('aria-pressed', String(ex)); });
+      const cut = h('input', { type: 'range', min: 5, max: 100, value: 100, 'aria-label': '剖切位置（往左拉就切到材內部）', oninput: (e) => viewer.setCut(+e.target.value / 100) });
+      bar.append(btn('立體', () => viewer.preset('iso')), btn('平面', () => viewer.preset('plan')), btn('側面', () => viewer.preset('side')), exBtn,
+        h('label', { class: 'jt3d-cut' }, h('span', { text: '剖切' }), cut));
+    } catch (e) {
+      open.disabled = false; open.textContent = '🧊 開啟 3D 旋轉檢視';
+      box.append(h('p', { class: 'jt-src', text: e.message === 'webgl' ? '這支裝置或瀏覽器不支援 3D 顯示（WebGL），仍可使用上面的平面、側面圖。' : '3D 載入失敗，請確認網路後重試。' }));
+    }
+  });
+  box.append(open, h('p', { class: 'jt-src', text: '3D 模型依文獻圖 17(a) 的比例生成，可旋轉、拆開、剖切，用來看兩材如何咬合。' }));
+}
+let curDmm = DEFAULT_D;
+const currentD = () => curDmm;
+
 export function renderJointPage({ $, state, save, readLen }) {
   const id = JOINTS.some((j) => j.id === state.jointId) ? state.jointId : JOINTS[0].id;
   const j = JOINTS.find((x) => x.id === id);
@@ -23,6 +64,8 @@ export function renderJointPage({ $, state, save, readLen }) {
   }
 
   $('jt-fig').innerHTML = jointFigure(id, D);
+  curDmm = D;
+  mount3d($, id, D);
 
   const spec = jointSpec(id, D);
   const tbl = $('jt-table');
