@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { inflateSync } from 'node:zlib';
 import { join } from 'node:path';
 
@@ -99,7 +99,7 @@ test('色彩關係：主色是調暗的玫瑰褐、標題列是調暗的藍灰�
 test('舊的主題色不再殘留（木色、令和紫粉）', () => {
   const OLD = ['#8a4f1a', '#e0a45e', '#2a2118', '#f6f1e8', '#efe7d8', '#f1e6d2', '#d9a05b', '#1b1610',
     '#5f3f99', '#38284f', '#fbf5f7', '#f3a6bb', '#b83a63', '#f6c3d1', '#f9e1e8', '#c9afee', '#17121d', '#ee8aa8'];
-  for (const f of ['css/style.css', 'index.html', 'manifest.webmanifest', 'icons/icon.svg']) {
+  for (const f of ['css/style.css', 'index.html', 'manifest.webmanifest']) {
     const txt = read(f).toLowerCase();
     for (const hex of OLD) assert.ok(!txt.includes(hex), `${f} 仍含舊色 ${hex}`);
   }
@@ -112,9 +112,6 @@ test('瀏覽器與安裝後的主題色與標題列色一致', () => {
   assert.equal(meta, light.bar.toLowerCase());
   assert.equal(man.theme_color.toLowerCase(), light.bar.toLowerCase());
   assert.equal(man.background_color.toLowerCase(), light.bar.toLowerCase());
-  const svg = read('icons/icon.svg').toLowerCase();
-  assert.ok(svg.includes(light.bar.toLowerCase()), '圖示底色應與標題列色一致');
-  assert.ok(svg.includes(light.mauve) && svg.includes(light.cream), '圖示用到玫瑰褐與米黃原色');
 });
 
 test('首頁不放配色說明卡片', () => {
@@ -150,15 +147,55 @@ function pngPixel(buf, px, py) {
   return '#' + [out[o], out[o + 1], out[o + 2]].map((x) => x.toString(16).padStart(2, '0')).join('');
 }
 
-test('手機桌面圖示（PNG）的底色是新的標題列色，且不是舊色', () => {
-  for (const f of ['icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png']) {
-    const corner = pngPixel(readFileSync(join(root, f)), 3, 3);
-    assert.equal(corner.toLowerCase(), light.bar.toLowerCase(), `${f} 左上角像素 ${corner} 應為 ${light.bar}`);
+// 圖示是吉祥物插圖（橘色底），與網站三色配色各自獨立；這裡只檢查尺寸、透明度與四角
+function pngInfo(buf) {
+  assert.deepEqual([...buf.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10], '不是 PNG');
+  return { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20), ctype: buf[25] };
+}
+function pngAlpha(buf, px, py) {
+  const { w, h, ctype } = pngInfo(buf);
+  assert.equal(ctype, 6, '需要 RGBA');
+  let off = 8, idat = [];
+  while (off < buf.length) { const len = buf.readUInt32BE(off), type = buf.toString('ascii', off + 4, off + 8); if (type === 'IDAT') idat.push(buf.subarray(off + 8, off + 8 + len)); off += 12 + len; }
+  const stride = w * 4, raw = inflateSync(Buffer.concat(idat)), out = Buffer.alloc(h * stride);
+  for (let y = 0; y < h; y++) {
+    const f = raw[y * (stride + 1)], line = raw.subarray(y * (stride + 1) + 1, (y + 1) * (stride + 1));
+    for (let i = 0; i < stride; i++) {
+      const a = i >= 4 ? out[y * stride + i - 4] : 0, b = y ? out[(y - 1) * stride + i] : 0, c = i >= 4 && y ? out[(y - 1) * stride + i - 4] : 0;
+      let v = line[i];
+      if (f === 1) v += a; else if (f === 2) v += b; else if (f === 3) v += (a + b) >> 1;
+      else if (f === 4) { const p = a + b - c, pa = Math.abs(p - a), pb = Math.abs(p - b), pc = Math.abs(p - c); v += pa <= pb && pa <= pc ? a : pb <= pc ? b : c; }
+      out[y * stride + i] = v & 255;
+    }
+  }
+  return out[py * stride + px * 4 + 3];
+}
+
+test('App 圖示：尺寸正確，manifest 與 index.html 指向存在的檔案', () => {
+  const sizes = { 'icons/icon-192.png': 192, 'icons/icon-512.png': 512, 'icons/icon-maskable-512.png': 512, 'icons/apple-touch-icon.png': 180 };
+  for (const [f, n] of Object.entries(sizes)) { const i = pngInfo(readFileSync(join(root, f))); assert.equal(i.w, n, f); assert.equal(i.h, n, f); }
+  const man = JSON.parse(read('manifest.webmanifest'));
+  for (const ic of man.icons) assert.ok(existsSync(join(root, ic.src)), `manifest 圖示不存在：${ic.src}`);
+  assert.ok(man.icons.some((i) => i.purpose === 'maskable') && man.icons.some((i) => i.purpose === 'any' && i.sizes === '512x512'));
+  const html = read('index.html');
+  for (const m of html.matchAll(/(?:href|src)="(icons\/[^"]+)"/g)) assert.ok(existsSync(join(root, m[1])), `index.html 引用不存在的圖示：${m[1]}`);
+});
+
+test('App 圖示：一般用途是圓角（四角透明、中央不透明）；iOS 與 maskable 是滿版不透明', () => {
+  for (const f of ['icons/icon-192.png', 'icons/icon-512.png']) {
+    const buf = readFileSync(join(root, f)), { w } = pngInfo(buf);
+    assert.equal(pngAlpha(buf, 1, 1), 0, `${f} 左上角應透明`);
+    assert.equal(pngAlpha(buf, w - 2, w - 2), 0, `${f} 右下角應透明`);
+    assert.equal(pngAlpha(buf, w >> 1, w >> 1), 255, `${f} 中央應不透明`);
+  }
+  for (const f of ['icons/apple-touch-icon.png', 'icons/icon-maskable-512.png']) {
+    const px = pngPixel(readFileSync(join(root, f)), 2, 2);
+    assert.notEqual(px, '#ffffff', `${f} 角落不該是白色`);
+    assert.ok(parseInt(px.slice(1, 3), 16) > 200 && parseInt(px.slice(5, 7), 16) < 160, `${f} 角落應是吉祥物的橘色底，而不是 ${px}`);
   }
 });
 
-test('讀 PNG 的測試本身有效：能分辨不同顏色', () => {
-  const png = readFileSync(join(root, 'icons/icon-512.png'));
-  const center = pngPixel(png, 256, 330);              // 尺身（玫瑰褐）
-  assert.notEqual(center.toLowerCase(), light.bar.toLowerCase(), '中央不該是底色，代表真的有讀到不同像素');
+test('讀 PNG 的測試本身有效：能分辨不同位置的顏色', () => {
+  const png = readFileSync(join(root, 'icons/icon-maskable-512.png'));
+  assert.notEqual(pngPixel(png, 256, 256), pngPixel(png, 3, 3), '中央與角落應是不同顏色，代表真的有讀到不同像素');
 });

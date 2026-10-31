@@ -71,7 +71,7 @@
 色票與對比度（WCAG AA，文字 ≥ 4.5；圖形色塊 ≥ 3）由 `tests/theme.test.js` 檢查，圖示 PNG 的底色也會檢查。
 功能性的狀態色（吉＝紅、凶＝黑、通過＝綠、警示＝橘）刻意不跟主題走。
 
-換圖示或配色後，執行一次 `node scripts/build-icons.mjs`（需要 Playwright）重新產生 PNG 圖示。
+App 圖示與首頁圖是吉祥物插圖（`design/mascot-1024.png`）。換圖後執行一次 `python3 scripts/build-icons.py`（需要 Pillow、numpy、scipy）重新產生 `icons/` 內的 PNG，再把 `sw.js`、`js/app.js`、`index.html` 的版本號各 +1。
 
 ## 開發
 

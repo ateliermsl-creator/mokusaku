@@ -95,11 +95,11 @@ function halfTongue(D, { neckLen, headLen, wNeck, wHead, ext = 1 }) {
   };
 }
 
-export function jointModel(id, D) {
+export function jointModel(id, D, { ext = 1 } = {}) {
   if (!(D > 0) || !Number.isFinite(D)) throw new Error('材成要大於 0');
   if (id === 'oikake') return oikakeGeneric(D);
-  if (id === 'kama') return halfTongue(D, { neckLen: 0.625 * D, headLen: 0.625 * D, wNeck: 0.25 * D, wHead: 0.375 * D });
-  if (id === 'koshikake') return halfTongue(D, { neckLen: 0, headLen: 0.5 * D, wNeck: 0.25 * D, wHead: 0.375 * D });
+  if (id === 'kama') return halfTongue(D, { neckLen: 0.625 * D, headLen: 0.625 * D, wNeck: 0.25 * D, wHead: 0.375 * D, ext });
+  if (id === 'koshikake') return halfTongue(D, { neckLen: 0, headLen: 0.5 * D, wNeck: 0.25 * D, wHead: 0.375 * D, ext });
   throw new Error(`沒有這個継手：${id}`);
 }
 
