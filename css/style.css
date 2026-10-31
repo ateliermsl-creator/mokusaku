@@ -403,21 +403,5 @@ td.lb-good { color: #c0392b; font-weight: 600; } td.lb-bad { color: var(--muted)
 .sheet .keypad .k { min-height: 42px; font-size: 19px; border-radius: 10px; }
 .sheet .keypad .k.fn, .sheet .keypad .k.sq { font-size: 15px; }
 body.sheet-open { padding-bottom: calc(var(--sheet-h, 360px) + 16px); }
-
-/* 本站配色卡 */
-.palette summary { cursor: pointer; }
-.palette summary small { margin-left: 6px; color: var(--muted); }
-.palette .r-lead { margin: 10px 0 6px; font-size: 14px; line-height: 1.7; }
-.palette .r-list { list-style: none; margin: 8px 0; padding: 0; }
-.palette .r-list li { display: flex; gap: 12px; padding: 10px 0; border-top: 1px dashed var(--line); }
-.palette .r-list li:first-child { border-top: 0; }
-.palette .sw { flex: none; width: 40px; height: 40px; margin-top: 2px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .14); }
-.palette .sw.mauve { background: var(--mauve); }
-.palette .sw.cream { background: var(--cream); }
-.palette .sw.mist { background: var(--mist); }
-.palette .r-list b { font-size: 16px; }
-.palette .r-list p { margin: 2px 0 0; font-size: 14px; line-height: 1.6; color: var(--ink); }
-.palette .r-list .use { color: var(--muted); font-size: 13px; }
-
 /* 摺疊標題：點開收合時不要誤選到文字 */
 details > summary { -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }

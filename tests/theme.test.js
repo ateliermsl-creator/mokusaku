@@ -117,12 +117,10 @@ test('瀏覽器與安裝後的主題色與標題列色一致', () => {
   assert.ok(svg.includes(light.mauve) && svg.includes(light.cream), '圖示用到玫瑰褐與米黃原色');
 });
 
-test('首頁「本站配色」卡片：三個色碼與色票一致，並註明不是官方色票', () => {
+test('首頁不放配色說明卡片', () => {
   const html = read('index.html');
-  const card = /<details class="panel palette"[\s\S]*?<\/details>/.exec(html)[0];
-  for (const k of ['mauve', 'cream', 'mist']) assert.ok(card.includes(light[k]), `卡片缺少 ${k} 的色碼 ${light[k]}`);
-  assert.ok(card.includes('不是傳統色名或官方色票'));
-  for (const k of ['sw mauve', 'sw cream', 'sw mist']) assert.ok(card.includes(k));
+  assert.ok(!html.includes('palette') && !html.includes('本站配色'));
+  assert.ok(!/\.palette|\.r-list|\.r-lead/.test(css));
 });
 
 // ── 讀 PNG 像素（8-bit RGB/RGBA、非交錯）：確認手機桌面圖示也是新配色 ──
