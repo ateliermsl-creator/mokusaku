@@ -1,0 +1,131 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { TERMS, CATEGORIES, CONF } from '../js/glossary.js';
+import { search, norm, makeCustom } from '../js/glossary-search.js';
+
+test('詞庫資料完整性', () => {
+  const ids = new Set();
+  for (const t of TERMS) {
+    assert.ok(!ids.has(t.id), `重複 id ${t.id}`); ids.add(t.id);
+    assert.ok(CATEGORIES.includes(t.cat), `${t.ja}: 分類 ${t.cat}`);
+    assert.ok(t.ja.trim(), 'ja 空白');
+    if (t.ja === '—') assert.equal(t.kana, '', '「無直接對應」不應有假名');
+    else assert.match(t.kana, /^[ぁ-ゖー・／]+$/, `${t.ja}: 假名要用平假名 → ${t.kana}`);
+    assert.ok(Array.isArray(t.slang) && Array.isArray(t.links), `${t.ja}: slang/links`);
+    for (const l of t.links) assert.ok(l.label && (l.disabled || /^#\//.test(l.href)), `${t.ja}: link`);
+    assert.ok(Array.isArray(t.tw) && t.tw.length > 0 && t.tw.every((x) => x.trim()), `${t.ja}: tw`);
+    assert.ok(['v', 'c', 'q'].includes(t.conf) && t.conf in CONF, `${t.ja}: conf`);
+    if (t.conf === 'v') assert.match(t.src, /^https?:\/\//, `${t.ja}: 已查證必須附來源`);
+  }
+  assert.ok(TERMS.length >= 100);
+});
+
+test('同一個「日文 + 分類」不重複', () => {
+  const seen = new Set();
+  for (const t of TERMS) {
+    const k = `${t.cat}|${t.ja}`;
+    assert.ok(!seen.has(k), `重複詞條 ${k}`); seen.add(k);
+  }
+});
+
+test('正規化：片假名、全形、空白', () => {
+  assert.equal(norm('タルキ'), 'たるき');
+  assert.equal(norm(' たる き '), 'たるき');
+  assert.equal(norm('ＡＢＣ'), 'abc');
+  assert.equal(norm('プレカット'), 'ぷれかっと');
+  assert.equal(norm(null), '');
+});
+
+const firstJa = (r) => r[0]?.ja;
+
+test('日→台：漢字、平假名、片假名都能查', () => {
+  assert.equal(firstJa(search(TERMS, { q: '垂木' })), '垂木');
+  assert.equal(firstJa(search(TERMS, { q: 'たるき' })), '垂木');
+  assert.equal(firstJa(search(TERMS, { q: 'タルキ' })), '垂木');
+  assert.equal(firstJa(search(TERMS, { q: 'すみぎ' })), '隅木');
+  assert.equal(firstJa(search(TERMS, { q: 'プレカット' })), 'プレカット');
+});
+
+test('台→日：中文能查到日文', () => {
+  const ja = (q) => search(TERMS, { q, dir: 'tw' }).map((t) => t.ja);
+  assert.ok(ja('角梁').includes('隅木'));
+  assert.ok(ja('椽').includes('垂木'));
+  assert.ok(ja('燕尾').includes('蟻継ぎ'));
+  assert.ok(ja('墨斗').includes('墨壺'));
+  assert.ok(ja('抄平').includes('水盛り'));
+  assert.ok(ja('榫卯').includes('仕口・継手'));
+});
+
+test('現場行話也能查（台→日）', () => {
+  const ja = (q) => search(TERMS, { q, dir: 'tw' }).map((t) => t.ja);
+  assert.ok(ja('Kak-á').includes('垂木'));
+  assert.ok(ja('ヌキ').includes('貫'));
+  assert.ok(ja('ドダイ').includes('土台'));
+  // 「Taruki」只存在於行話欄：台→日查得到，日文欄位查不到
+  assert.ok(ja('Taruki').includes('垂木'));
+  assert.equal(search(TERMS, { q: 'Taruki', dir: 'ja' }).length, 0);
+});
+
+test('同名異義警示：束', () => {
+  const tsuka = TERMS.filter((t) => t.warn.includes('同名異義'));
+  const keys = tsuka.map((t) => t.ja);
+  assert.ok(keys.includes('小屋束') && keys.includes('—'));
+  // 日式小屋束要對到瓜筒，不能對到台式的「束」
+  assert.ok(TERMS.find((t) => t.ja === '小屋束').tw.includes('瓜筒'));
+  assert.ok(!TERMS.find((t) => t.ja === '小屋束').tw.includes('束仔'));
+});
+
+test('不收錄未經查證的說法當作正式名稱', () => {
+  const allTw = TERMS.flatMap((t) => t.tw);
+  for (const bad of ['銀錠榫', '十字卡榫', '勾頭搭掌榫', '掛鎌榫', '羊角榫', '引独鈷']) {
+    assert.ok(!allTw.includes(bad), `不應把「${bad}」列為台灣用語`);
+  }
+});
+
+test('完全相符排在前面', () => {
+  const r = search(TERMS, { q: '梁' });
+  assert.equal(r[0].ja, '梁');
+});
+
+test('方向與分類篩選', () => {
+  assert.equal(search(TERMS, { q: '椽', dir: 'ja' }).length, 0); // 日文欄位沒有「椽」
+  assert.ok(search(TERMS, { q: '椽', dir: 'tw' }).length > 0);
+  const roof = search(TERMS, { cat: '屋架・屋頂' });
+  assert.ok(roof.length > 5 && roof.every((t) => t.cat === '屋架・屋頂'));
+  assert.equal(search(TERMS, { q: '垂木', cat: '工具' }).length, 0);
+  assert.equal(search(TERMS, {}).length, TERMS.length);
+});
+
+test('查不到時回傳空陣列', () => {
+  assert.deepEqual(search(TERMS, { q: 'ぽよぽよぷるん' }), []);
+});
+
+test('自訂詞條', () => {
+  const c = makeCustom({ ja: ' 野垂木 ', kana: 'のだるき', tw: '暗椽、隱椽，  ', note: '看不到的椽木' }, 123);
+  assert.equal(c.ja, '野垂木'); assert.deepEqual(c.tw, ['暗椽', '隱椽']); assert.equal(c.conf, 'u');
+  assert.throws(() => makeCustom({ ja: '', tw: 'x' }));
+  assert.throws(() => makeCustom({ ja: 'x', tw: ' 、 ' }));
+  // 自訂詞條可被搜尋，也可用「我的詞條」分類篩選
+  const all = [...TERMS, c];
+  assert.equal(firstJa(search(all, { q: 'のだるき' })), '野垂木');
+  assert.deepEqual(search(all, { cat: '我的詞條' }).map((t) => t.ja), ['野垂木']);
+  assert.ok(search(all, { q: '暗椽', dir: 'tw' }).length === 1);
+});
+
+import { DIAGRAMS, renderDiagramSvg } from '../js/diagrams.js';
+
+test('構架圖：每個構件都對得到詞庫詞條', () => {
+  assert.equal(DIAGRAMS.length, 2);
+  for (const d of DIAGRAMS) {
+    const ids = new Set();
+    for (const p of d.parts) {
+      assert.ok(!ids.has(p.id), `重複構件 id ${p.id}`); ids.add(p.id);
+      const [cat, ja] = p.ref;
+      assert.ok(TERMS.some((t) => t.cat === cat && t.ja === ja), `${d.id}/${p.id}: 找不到詞條 ${cat}|${ja}`);
+      assert.ok(p.shapes.includes('<'), `${p.id}: 沒有圖形`);
+    }
+    const svg = renderDiagramSvg(d);
+    for (const p of d.parts) assert.ok(svg.includes(`data-id="${p.id}"`));
+    assert.ok(d.parts.length >= 9);
+  }
+});

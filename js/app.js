@@ -1,4 +1,5 @@
 import { evalLength, toKenShaku, toTaiShaku, fmtMm, toShaku } from './units.js';
+import { createGlossaryUI } from './glossary-ui.js';
 import {
   roofFromKobai, roofLengths, haitsukeRafters, kobaiFromAngle, kobaiFromRiseRun,
   arcFromChordRise, arcFromChordRadius, arcOffsets, diagonal,
@@ -252,6 +253,7 @@ const renderers = {
   'tab-mix': renderCalc, 'tab-roof': renderRoof, 'tab-arc': renderArc, 'tab-diag': renderDiag,
 };
 document.querySelectorAll('main input, main select').forEach((el) => {
+  if (el.classList.contains('nopersist')) return; // 搜尋框、新增詞條表單不存草稿
   if (state.inputs && el.id in state.inputs) el.value = state.inputs[el.id];
   el.addEventListener('input', () => {
     state.inputs = state.inputs || {};
@@ -288,7 +290,8 @@ $('keys').addEventListener('pointerdown', (e) => {
    #/calc[/mix|roof|arc|diag] 木作計算機（四個分頁；沒寫分頁就開上次用的）
    舊網址 #/roof #/arc #/diag 會自動導到 #/calc/… */
 const CALC_TABS = { mix: '台尺混算', roof: '屋頂坡度', arc: '弧線半徑', diag: '對角線' };
-const PAGES = ['home', 'install', 'calc'];
+const PAGES = ['home', 'install', 'calc', 'glossary'];
+const glossary = createGlossaryUI({ state, save });
 const LEGACY = ['roof', 'arc', 'diag'];
 
 function route() {
@@ -309,7 +312,9 @@ function route() {
     if (a.dataset.sub === sub && isCalc) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   });
 
-  const title = isCalc ? '木作計算機' : (page === 'install' ? '加到手機桌面' : '日式大木作工具箱');
+  const title = isCalc ? '木作計算機'
+    : page === 'install' ? '加到手機桌面'
+      : page === 'glossary' ? '台日大木作名詞＆構架對照庫' : '日式大木作工具箱';
   $('topbar').hidden = page === 'home';
   $('subtabs').hidden = !isCalc;
   $('topTitle').textContent = title;
@@ -326,6 +331,7 @@ function route() {
   }
   if (page === 'home') renderHome();
   if (page === 'install') $('inAppWarn').hidden = !inApp();
+  if (page === 'glossary') glossary.render();
   window.scrollTo(0, 0);
 }
 

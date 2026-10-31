@@ -213,3 +213,60 @@ details.panel ul { margin: 4px 0; padding-left: 22px; font-size: 14px; }
 #subtabs a .jp { margin: 0; font-size: 10.5px; opacity: .65; color: inherit; white-space: nowrap; }
 #subtabs a[aria-current="page"] { background: #e0a45e; color: #2a2118; }
 #subtabs a[aria-current="page"] .jp { opacity: .8; }
+
+/* ---------- 台日大木作名詞＆構架對照庫 ---------- */
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; margin-bottom: 12px; background: var(--surface-2); border-radius: 12px; }
+.seg button { min-height: 44px; font: inherit; font-weight: 600; color: var(--muted); background: transparent; border: 0; border-radius: 9px; }
+.seg button[aria-selected="true"] { background: var(--surface); color: var(--accent); box-shadow: 0 1px 3px rgba(0, 0, 0, .15); }
+
+.chips { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 10px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { flex: 0 0 auto; min-height: 38px; padding: 0 14px; font: inherit; font-size: 14px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+
+input[type="search"] { -webkit-appearance: none; appearance: none; }
+
+.term { margin: 0 0 12px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.term-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.conf { padding: 1px 9px; font-size: 12px; font-weight: 600; border-radius: 999px; border: 1px solid var(--line); }
+.conf-v { color: #1d6b33; background: #e1f3e6; border-color: #b7dfc2; }
+.conf-c { color: var(--muted); background: var(--surface-2); }
+.conf-q { color: #7a5200; background: #fff3cd; border-color: #ecd98c; }
+.conf-u { color: var(--accent); background: transparent; border-color: var(--accent); }
+@media (prefers-color-scheme: dark) {
+  .conf-v { color: #8fe0a5; background: #17331f; border-color: #2d5a3a; }
+  .conf-q { color: #ffd98a; background: #3f3210; border-color: #6b551a; }
+}
+.term .cat { font-size: 12px; color: var(--muted); }
+.dim { display: grid; grid-template-columns: 5.2em 1fr; gap: 8px; padding: 6px 0; border-top: 1px dashed var(--line); }
+.dim:first-of-type { border-top: 0; }
+.dl { font-size: 12px; color: var(--muted); padding-top: 4px; }
+.dv b { font-size: 19px; }
+.dv b.none { font-size: 15px; font-weight: 500; color: var(--muted); }
+.dv small { display: block; color: var(--muted); font-size: 13px; }
+.dv .sl { font-size: 14px; }
+.dv .nt { font-size: 14px; color: var(--ink); }
+.warn { margin: 8px 0 4px; padding: 10px 12px; font-size: 14px; line-height: 1.55; color: #7a2e00; background: #fff0e0; border-left: 4px solid #e07b00; border-radius: 8px; }
+@media (prefers-color-scheme: dark) { .warn { color: #ffcf9e; background: #3b2610; border-left-color: #e0a45e; } }
+.acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.btnlink { display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; font: inherit; font-size: 14px; font-weight: 600; text-decoration: none; color: var(--accent-ink); background: var(--accent); border: 1px solid var(--accent); border-radius: 10px; }
+.btnlink.ghost { color: var(--accent); background: transparent; }
+.btnlink.dis { color: var(--muted); background: transparent; border-style: dashed; border-color: var(--line); font-weight: 500; }
+.empty { padding: 16px; text-align: center; color: var(--muted); }
+.gl-form { margin: 12px 0; padding: 4px 14px 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.gl-about { margin: 14px 0 0; padding: 10px 14px; font-size: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.gl-about summary { cursor: pointer; font-weight: 600; }
+.gl-about p { margin: 8px 0 0; color: var(--muted); }
+
+/* 構架圖 */
+.fig.big { max-height: none; margin: 8px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.fig .part { cursor: pointer; outline: none; }
+.fig .shp { fill: var(--fig-fill); stroke: var(--fig-line); stroke-width: 1.5; stroke-linejoin: round; }
+.fig .shp.ln { fill: none; stroke-linecap: round; }
+.fig .hit { fill: none; stroke: transparent; pointer-events: stroke; }
+.fig rect.hit { fill: transparent; pointer-events: all; }
+.fig .part:hover .shp, .fig .part:focus-visible .shp { fill: rgba(224, 164, 94, .35); }
+.fig .part.sel .shp { fill: var(--accent); stroke: var(--accent); }
+.fig .part.sel .shp.ln { fill: none; }
+.fig .lbls text { font-size: 10px; pointer-events: none; fill: var(--ink); }
+.pick-h { margin: 12px 0 6px; font-size: 14px; color: var(--muted); }

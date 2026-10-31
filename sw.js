@@ -1,9 +1,10 @@
 // 離線快取：同源 GET 採 stale-while-revalidate。
 // 更新程式後，把 CACHE 版本號加 1，舊快取會在 activate 時清掉。
-const CACHE = 'mokusaku-v4';
+const CACHE = 'mokusaku-v5';
 const ASSETS = [
   './', 'index.html', 'css/style.css',
   'js/app.js', 'js/units.js', 'js/calc.js',
+  'js/glossary.js', 'js/glossary-search.js', 'js/glossary-ui.js', 'js/diagrams.js',
   'manifest.webmanifest', 'updates.json',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png',
 ];

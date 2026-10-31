@@ -42,8 +42,9 @@
         <p class="jp">大工・墨付け・規矩術</p>
       </section>
       <a class="tool" href="#/calc"><div class="ph">🧮</div><div><b>木作計算機 <i class="jp">電卓</i></b><small>台尺混算・屋頂坡度與角梁椽木・弧線半徑・對角線抓直角</small></div><span class="arrow">›</span></a>
+      <a class="tool" href="#/glossary"><div class="ph">📖</div><div><b>台日大木作名詞＆構架對照庫</b><small>日本・台灣傳統・現場行話四維對照；點構架圖查名稱</small></div><span class="arrow">›</span></a>
       <a class="tool" href="#/install"><div class="ph">📲</div><div><b>加到手機桌面</b><small>像 App 一樣使用・教學</small></div><span class="arrow">›</span></a>
-      <div class="tool soon"><div class="ph">＋</div><div><b>更多工具開發中</b><small>仕口・継手圖鑑、轉角樓梯、等分割、下料 <span class="jp">木取り</span>　敬請期待</small></div></div>
+      <div class="tool soon"><div class="ph">＋</div><div><b>更多工具開發中</b><small>仕口・継手放樣圖鑑、轉角樓梯、等分割、下料 <span class="jp">木取り</span>　敬請期待</small></div></div>
       <details class="panel" id="updates" hidden><summary><b>📢 最新更新</b> <small id="updDate"></small></summary><div id="updBody"></div></details>
     </section>
 
@@ -65,6 +66,60 @@
       </ol>
       <p class="hint" id="inAppWarn" hidden>⚠️ 你目前好像在 LINE 或 Facebook 的內建瀏覽器裡，請先點右上角選「用瀏覽器開啟」，再照上面步驟。</p>
       <p class="note">更新後如果畫面沒變，把 App 從多工畫面完全關掉再重開一次即可。</p>
+    </section>
+
+    <!-- 台日大木作名詞＆構架對照庫 -->
+    <section id="page-glossary" class="panel" hidden>
+      <div class="seg" id="gl-seg" role="tablist">
+        <button type="button" role="tab" data-tab="terms" aria-selected="true">名詞對照</button>
+        <button type="button" role="tab" data-tab="frame" aria-selected="false">構架圖鑑</button>
+      </div>
+
+      <div id="gl-terms">
+        <label class="field">
+          <span>輸入日文、假名、中文或現場講法</span>
+          <input id="gl-q" class="nopersist" type="search" autocomplete="off" autocapitalize="off" spellcheck="false"
+                 enterkeyhint="search" placeholder="例：垂木、たるき、椽、角梁、ヌキ">
+        </label>
+        <div class="chips" id="gl-dir" aria-label="查詢方向"></div>
+        <div class="chips" id="gl-cat" aria-label="分類"></div>
+        <p class="note" id="gl-count"></p>
+        <div id="gl-list"></div>
+        <div class="row">
+          <button type="button" id="gl-rand" class="btn">🎲 隨機一詞</button>
+          <button type="button" id="gl-add" class="btn">＋ 新增詞條</button>
+        </div>
+        <form id="gl-form" class="gl-form" hidden>
+          <h2>新增我的詞條</h2>
+          <label class="field"><span>日文</span><input id="gl-f-ja" class="nopersist" type="text" autocomplete="off" placeholder="例：野垂木"></label>
+          <label class="field"><span>假名（可空白）</span><input id="gl-f-kana" class="nopersist" type="text" autocomplete="off" placeholder="例：のだるき"></label>
+          <label class="field"><span>台灣用語（多個用「、」分隔）</span><input id="gl-f-tw" class="nopersist" type="text" autocomplete="off" placeholder="例：暗椽、隱椽"></label>
+          <label class="field"><span>說明（可空白）</span><input id="gl-f-note" class="nopersist" type="text" autocomplete="off" placeholder="例：看不到的椽木"></label>
+          <div id="gl-f-err" class="err" role="alert"></div>
+          <div class="row">
+            <button type="submit" class="btn primary">儲存</button>
+            <button type="button" id="gl-f-cancel" class="btn">取消</button>
+          </div>
+        </form>
+        <div class="row"><button type="button" id="gl-export" class="btn">複製我的詞條（JSON）</button></div>
+        <details class="gl-about">
+          <summary>資料說明與可信度</summary>
+          <p><b>已查證</b>：附有來源網址，可按「查看來源」。目前很少，因為台灣大木作用語難以找到公開的對照表。</p>
+          <p><b>常見對應</b>：業界一般的對應，但還沒有逐項查證。</p>
+          <p><b>待確認</b>：兩邊構造不完全相同、台灣沒有固定說法，或各地各師傅說法不同。</p>
+          <p><b>現場行話</b>（台語音、日語外來語）為資料提供者所述，尚未逐項查證，請以現場匠師的說法為準。</p>
+          <p>台灣的傳統漢式大木（閩南、客家匠師）、日治時期木構造、與現場師傅的口語行話常常並存，同一個部位可能有三種講法；你的修正可以用「＋ 我的說法」記在自己的手機，再用「複製我的詞條」傳給我併進內建詞庫。</p>
+        </details>
+      </div>
+
+      <div id="gl-frame" hidden>
+        <div class="chips" id="gl-dg" aria-label="構架"></div>
+        <h2 id="gl-dg-title"></h2>
+        <p class="note" id="gl-dg-desc"></p>
+        <svg id="gl-fig" class="fig big" role="img"></svg>
+        <p class="note">點一下圖上的構件，下方會顯示台日對照。</p>
+        <div id="gl-pick"></div>
+      </div>
     </section>
 
     <!-- 木作計算機（四個分頁） -->
