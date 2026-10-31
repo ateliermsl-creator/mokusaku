@@ -68,7 +68,8 @@ export function createGlossaryUI({ state, save }) {
         ? h('span', { class: 'btnlink dis', text: l.label })
         : h('a', { class: 'btnlink', href: l.href, text: `🧮 ${l.label}` }));
     }
-    if (t.src) acts.append(h('a', { class: 'btnlink ghost', href: t.src, target: '_blank', rel: 'noopener noreferrer', text: '📎 查看來源' }));
+    if (/^https?:\/\//.test(t.src)) acts.append(h('a', { class: 'btnlink ghost', href: t.src, target: '_blank', rel: 'noopener noreferrer', text: '📎 查看來源' }));
+    else if (t.src) card.append(h('div', { class: 'cite', text: `📖 出處：${t.src}` }));
     if (t.conf === 'u') {
       acts.append(h('button', { type: 'button', class: 'btnlink ghost', text: '🗑 刪除', onclick: () => {
         custom = custom.filter((x) => x.id !== t.id); persistCustom(); renderList();

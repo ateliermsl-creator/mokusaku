@@ -354,7 +354,14 @@ input[type="search"] { -webkit-appearance: none; appearance: none; }
 .cmp { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .cmp th, .cmp td { padding: 7px 8px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
 .cmp thead th { font-size: 13px; color: var(--muted); }
-.cmp tbody th { width: 5.5em; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.cmp tbody th { width: 5.5em; font-weight: 600; color: var(--muted); }
+@media (max-width: 560px) {
+  /* 手機：列標題獨占一行，和小屋／洋小屋兩欄並排，文字才不會被擠成一字一行 */
+  .cmp thead th:first-child { display: none; }
+  .cmp thead tr, .cmp tbody tr { display: grid; grid-template-columns: 1fr 1fr; }
+  .cmp tbody th { grid-column: 1 / -1; width: auto; padding-bottom: 0; border-bottom: 0; }
+  .cmp td { border-bottom: 1px solid var(--line); }
+}
 .cmp .on { background: var(--surface-2); color: var(--ink); }
 .cmp thead .on { color: var(--accent); font-weight: 700; }
 
@@ -400,3 +407,4 @@ td.lb-good { color: #c0392b; font-weight: 600; } td.lb-bad { color: var(--muted)
 body.sheet-open { padding-bottom: calc(var(--sheet-h, 360px) + 16px); }
 /* 摺疊標題：點開收合時不要誤選到文字 */
 details > summary { -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+.dv ~ .cite, .cite { margin: 6px 2px 2px; font-size: 12.5px; line-height: 1.5; color: var(--mut); }
