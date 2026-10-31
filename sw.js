@@ -1,6 +1,6 @@
 // 離線快取：同源 GET 採 stale-while-revalidate。
 // 更新程式後，把 CACHE 版本號加 1，舊快取會在 activate 時清掉。
-const CACHE = 'mokusaku-v3';
+const CACHE = 'mokusaku-v4';
 const ASSETS = [
   './', 'index.html', 'css/style.css',
   'js/app.js', 'js/units.js', 'js/calc.js',

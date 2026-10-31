@@ -47,7 +47,7 @@ body.on-tool { padding-bottom: calc(var(--keys-h) + env(safe-area-inset-bottom) 
 
 #topbar {
   position: sticky; top: 0; z-index: 5;
-  display: flex; align-items: center; gap: 10px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px;
   padding: calc(8px + env(safe-area-inset-top)) 12px 8px;
   background: var(--bar); color: var(--bar-ink);
 }
@@ -200,3 +200,16 @@ details.panel ul { margin: 4px 0; padding-left: 22px; font-size: 14px; }
 .line .v small.jp { display: block; color: var(--muted); }
 .result .shaku2.jp { font-size: 13px; }
 .tool b .jp { white-space: nowrap; }
+
+/* 木作計算機：頂端分頁 */
+#subtabs { flex: 1 0 100%; display: flex; gap: 6px; overflow-x: auto; margin: 0 -4px; padding: 2px 4px 2px; scrollbar-width: none; }
+#subtabs::-webkit-scrollbar { display: none; }
+#subtabs a {
+  flex: 1 0 auto; min-width: 78px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 5px 10px; border-radius: 10px; color: var(--bar-ink); text-decoration: none;
+  background: rgba(255, 255, 255, .10); line-height: 1.25;
+}
+#subtabs a b { font-size: 15px; font-weight: 600; white-space: nowrap; }
+#subtabs a .jp { margin: 0; font-size: 10.5px; opacity: .65; color: inherit; white-space: nowrap; }
+#subtabs a[aria-current="page"] { background: #e0a45e; color: #2a2118; }
+#subtabs a[aria-current="page"] .jp { opacity: .8; }

@@ -19,6 +19,12 @@
   <header id="topbar" hidden>
     <a id="homeBtn" href="#/" aria-label="回首頁" title="回首頁"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M12 3.2 2.6 11.6a.8.8 0 0 0 .5 1.4H5v7.2c0 .5.4.8.8.8H10v-5.6h4V20h4.2c.5 0 .8-.3.8-.8V13h1.9a.8.8 0 0 0 .5-1.4L12 3.2z"/></svg></a>
     <h1><span id="topTitle">日式大木作工具箱</span> <i class="jp" id="topJp"></i></h1>
+    <nav id="subtabs" aria-label="計算機分頁" hidden>
+      <a href="#/calc/mix" data-sub="mix"><b>台尺混算</b><i class="jp">尺貫法</i></a>
+      <a href="#/calc/roof" data-sub="roof"><b>屋頂坡度</b><i class="jp">勾配・隅木</i></a>
+      <a href="#/calc/arc" data-sub="arc"><b>弧線半徑</b><i class="jp">R・矢高</i></a>
+      <a href="#/calc/diag" data-sub="diag"><b>對角線</b><i class="jp">矩出し</i></a>
+    </nav>
   </header>
 
   <main>
@@ -35,12 +41,9 @@
         <p>台尺・公制混算與規矩術，現場隨身好用</p>
         <p class="jp">大工・墨付け・規矩術</p>
       </section>
-      <a class="tool" href="#/calc"><div class="ph">📏</div><div><b>台尺・公制混算 <i class="jp">尺貫法</i></b><small>丈・尺・寸・分與公釐混打，也可用日式「間」</small></div><span class="arrow">›</span></a>
-      <a class="tool" href="#/roof"><div class="ph">📐</div><div><b>屋頂坡度・角梁・椽木 <i class="jp">隅木・垂木</i></b><small>坡度換算、斜長、角梁實長、椽木逐支遞減</small></div><span class="arrow">›</span></a>
-      <a class="tool" href="#/arc"><div class="ph">⌒</div><div><b>弧線半徑 <i class="jp">R・矢高</i></b><small>弦長與弧高求半徑，弦等分點高度表</small></div><span class="arrow">›</span></a>
-      <a class="tool" href="#/diag"><div class="ph">◿</div><div><b>對角線・抓直角 <i class="jp">矩出し</i></b><small>對角線長度，兩條對角線差檢查</small></div><span class="arrow">›</span></a>
+      <a class="tool" href="#/calc"><div class="ph">🧮</div><div><b>木作計算機 <i class="jp">電卓</i></b><small>台尺混算・屋頂坡度與角梁椽木・弧線半徑・對角線抓直角</small></div><span class="arrow">›</span></a>
       <a class="tool" href="#/install"><div class="ph">📲</div><div><b>加到手機桌面</b><small>像 App 一樣使用・教學</small></div><span class="arrow">›</span></a>
-      <div class="tool soon"><div class="ph">＋</div><div><b>更多工具開發中</b><small>轉角樓梯・等分割・下料 <span class="jp">木取り</span>　敬請期待</small></div></div>
+      <div class="tool soon"><div class="ph">＋</div><div><b>更多工具開發中</b><small>仕口・継手圖鑑、轉角樓梯、等分割、下料 <span class="jp">木取り</span>　敬請期待</small></div></div>
       <details class="panel" id="updates" hidden><summary><b>📢 最新更新</b> <small id="updDate"></small></summary><div id="updBody"></div></details>
     </section>
 
@@ -64,8 +67,11 @@
       <p class="note">更新後如果畫面沒變，把 App 從多工畫面完全關掉再重開一次即可。</p>
     </section>
 
-    <!-- 台尺・公制混算 -->
-    <section id="tab-calc" class="panel" hidden>
+    <!-- 木作計算機（四個分頁） -->
+    <section id="page-calc" hidden>
+
+    <!-- 台尺混算 -->
+    <section id="tab-mix" class="panel" hidden>
       <label class="field">
         <span>算式</span>
         <input id="calc-expr" class="len" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false"
@@ -206,6 +212,8 @@
       <div id="diag-chk-err" class="err" role="alert"></div>
       <div id="diag-chk" class="card"></div>
     </section>
+
+    </section><!-- /page-calc -->
   </main>
 
   <div class="keys" id="keys" aria-label="快速輸入" hidden>

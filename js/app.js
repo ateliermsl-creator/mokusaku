@@ -249,7 +249,7 @@ function renderDiag() {
 
 /* ---------- 輸入欄位共通：還原 / 儲存 / 更新 ---------- */
 const renderers = {
-  'tab-calc': renderCalc, 'tab-roof': renderRoof, 'tab-arc': renderArc, 'tab-diag': renderDiag,
+  'tab-mix': renderCalc, 'tab-roof': renderRoof, 'tab-arc': renderArc, 'tab-diag': renderDiag,
 };
 document.querySelectorAll('main input, main select').forEach((el) => {
   if (state.inputs && el.id in state.inputs) el.value = state.inputs[el.id];
@@ -283,37 +283,49 @@ $('keys').addEventListener('pointerdown', (e) => {
   el.dispatchEvent(new Event('input', { bubbles: true }));
 });
 
-/* ---------- 路由：#/ 首頁、#/calc #/roof #/arc #/diag、#/install ---------- */
-const TOOLS = {
-  calc: ['台尺・公制混算', '尺貫法'],
-  roof: ['屋頂坡度・角梁・椽木', '勾配・隅木・垂木'],
-  arc: ['弧線半徑', 'R・矢高'],
-  diag: ['對角線・抓直角', '矩出し'],
-};
-const PAGES = ['home', 'install', ...Object.keys(TOOLS)];
+/* ---------- 路由 ----------
+   #/ 首頁　#/install 安裝教學
+   #/calc[/mix|roof|arc|diag] 木作計算機（四個分頁；沒寫分頁就開上次用的）
+   舊網址 #/roof #/arc #/diag 會自動導到 #/calc/… */
+const CALC_TABS = { mix: '台尺混算', roof: '屋頂坡度', arc: '弧線半徑', diag: '對角線' };
+const PAGES = ['home', 'install', 'calc'];
+const LEGACY = ['roof', 'arc', 'diag'];
 
 function route() {
-  const raw = (location.hash.replace(/^#\/?/, '') || 'home').split('/')[0];
-  const name = PAGES.includes(raw) ? raw : 'home';
-  const isTool = name in TOOLS;
-
-  document.querySelectorAll('main > section').forEach((sec) => {
-    sec.hidden = sec.id !== `page-${name}` && sec.id !== `tab-${name}`;
-  });
-  $('topbar').hidden = name === 'home';
-  $('topTitle').textContent = isTool ? TOOLS[name][0] : (name === 'install' ? '加到手機桌面' : '日式大木作工具箱');
-  $('topJp').textContent = isTool ? TOOLS[name][1] : '';
-  $('keys').hidden = !isTool;
-  document.body.classList.toggle('on-tool', isTool);
-  document.title = name === 'home' ? '日式大木作工具箱' : `${$('topTitle').textContent}｜日式大木作工具箱`;
-
-  if (isTool) {
-    const first = document.querySelector(`#tab-${name} input.len`);
-    if (first) lastInput = first;
-    renderers[`tab-${name}`]();
+  const parts = location.hash.replace(/^#\/?/, '').split('/');
+  let page = parts[0] || 'home';
+  let sub = parts[1];
+  if (LEGACY.includes(page)) { location.replace(`#/calc/${page}`); return; }
+  if (!PAGES.includes(page)) page = 'home';
+  const isCalc = page === 'calc';
+  if (isCalc) {
+    if (!(sub in CALC_TABS)) sub = state.calcTab in CALC_TABS ? state.calcTab : 'mix';
+    if (state.calcTab !== sub) { state.calcTab = sub; save(); }
   }
-  if (name === 'home') renderHome();
-  if (name === 'install') $('inAppWarn').hidden = !inApp();
+
+  document.querySelectorAll('main > section').forEach((sec) => { sec.hidden = sec.id !== `page-${page}`; });
+  if (isCalc) document.querySelectorAll('#page-calc > .panel').forEach((p) => { p.hidden = p.id !== `tab-${sub}`; });
+  document.querySelectorAll('#subtabs a').forEach((a) => {
+    if (a.dataset.sub === sub && isCalc) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+  });
+
+  const title = isCalc ? '木作計算機' : (page === 'install' ? '加到手機桌面' : '日式大木作工具箱');
+  $('topbar').hidden = page === 'home';
+  $('subtabs').hidden = !isCalc;
+  $('topTitle').textContent = title;
+  $('topJp').textContent = isCalc ? '電卓' : '';
+  $('keys').hidden = !isCalc;
+  document.body.classList.toggle('on-tool', isCalc);
+  document.title = page === 'home' ? '日式大木作工具箱'
+    : `${isCalc ? CALC_TABS[sub] : title}｜日式大木作工具箱`;
+
+  if (isCalc) {
+    const first = document.querySelector(`#tab-${sub} input.len`);
+    if (first) lastInput = first;
+    renderers[`tab-${sub}`]();
+  }
+  if (page === 'home') renderHome();
+  if (page === 'install') $('inAppWarn').hidden = !inApp();
   window.scrollTo(0, 0);
 }
 
