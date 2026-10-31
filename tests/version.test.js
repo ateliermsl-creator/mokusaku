@@ -72,3 +72,14 @@ test('App 名稱統一為「柴柴木作」（網頁標題、桌面名稱、mani
   assert.ok(html.includes('<h1>柴柴木作</h1>') && html.includes('id="topTitle">柴柴木作<'));
   assert.ok(!/<title>日式大木作工具箱/.test(html));
 });
+
+test('分享預覽（LINE／Facebook）：有 og 標籤，圖片是完整網址且檔案存在、為 1200×630', () => {
+  const html = read('index.html');
+  const get = (p) => new RegExp(`<meta property="${p}" content="([^"]+)"`).exec(html)?.[1];
+  assert.equal(get('og:title'), '柴柴木作｜日式大木作工具箱');
+  const img = get('og:image');
+  assert.match(img, /^https:\/\/ateliermsl-creator\.github\.io\/mokusaku\/icons\/og-image\.png$/);
+  const buf = readFileSync(join(root, 'icons/og-image.png'));
+  assert.equal(buf.readUInt32BE(16), 1200); assert.equal(buf.readUInt32BE(20), 630);
+  assert.ok(buf.length < 600 * 1024, '預覽圖不要太大（LINE 抓圖有大小限制）');
+});
