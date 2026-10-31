@@ -408,3 +408,15 @@ body.sheet-open { padding-bottom: calc(var(--sheet-h, 360px) + 16px); }
 /* 摺疊標題：點開收合時不要誤選到文字 */
 details > summary { -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
 .dv ~ .cite, .cite { margin: 6px 2px 2px; font-size: 12.5px; line-height: 1.5; color: var(--mut); }
+
+/* 仕口・継手 比例速查 */
+.fig .cut { stroke: var(--accent); stroke-width: 2.4; fill: none; stroke-linejoin: round; stroke-linecap: round; }
+.fig .hid { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 4 3; fill: none; opacity: .75; }
+.fig .dm { stroke: var(--muted); stroke-width: 1; fill: none; }
+.jt-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 6px 0; }
+.jt-table th, .jt-table td { padding: 7px 6px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+.jt-table thead th { font-size: 12.5px; color: var(--muted); }
+.jt-table td.n { width: 1.6em; color: var(--muted); }
+.jt-table td small { display: block; color: var(--muted); font-size: 12px; }
+.jt-src { margin: 6px 2px; font-size: 12.5px; line-height: 1.55; color: var(--muted); }
+a.chip { display: inline-flex; align-items: center; text-decoration: none; }

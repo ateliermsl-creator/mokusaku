@@ -13,12 +13,12 @@ const SQ2 = Math.SQRT2;
 /** 估計文字寬度（CJK 約 11px、其他約 6.2px），用來避免文字跑出畫面 */
 export const textWidth = (s) => [...String(s)].reduce((w, ch) => w + (ch.codePointAt(0) > 0x2e7f ? 11 : 6.2), 0);
 
-const line = (x1, y1, x2, y2, cls = 'dim') => `<line class="${cls}" x1="${r1(x1)}" y1="${r1(y1)}" x2="${r1(x2)}" y2="${r1(y2)}"/>`;
-const poly = (pts, cls = 'ln') => `<polygon class="${cls}" points="${pts.map((p) => `${r1(p[0])},${r1(p[1])}`).join(' ')}"/>`;
-const rect = (x, y, w, h, cls = 'ln', rx = 0) => `<rect class="${cls}" x="${r1(x)}" y="${r1(y)}" width="${r1(w)}" height="${r1(h)}"${rx ? ` rx="${rx}"` : ''}/>`;
+export const line = (x1, y1, x2, y2, cls = 'dim') => `<line class="${cls}" x1="${r1(x1)}" y1="${r1(y1)}" x2="${r1(x2)}" y2="${r1(y2)}"/>`;
+export const poly = (pts, cls = 'ln') => `<polygon class="${cls}" points="${pts.map((p) => `${r1(p[0])},${r1(p[1])}`).join(' ')}"/>`;
+export const rect = (x, y, w, h, cls = 'ln', rx = 0) => `<rect class="${cls}" x="${r1(x)}" y="${r1(y)}" width="${r1(w)}" height="${r1(h)}"${rx ? ` rx="${rx}"` : ''}/>`;
 const circle = (cx, cy, r, cls = 'ln') => `<circle class="${cls}" cx="${r1(cx)}" cy="${r1(cy)}" r="${r1(r)}"/>`;
 const path = (d, cls = 'ang') => `<path class="${cls}" d="${d}"/>`;
-const text = (x, y, s, anchor = 'middle', cls = '') =>
+export const text = (x, y, s, anchor = 'middle', cls = '') =>
   `<text x="${r1(x)}" y="${r1(y)}" text-anchor="${anchor}"${cls ? ` class="${cls}"` : ''}>${esc(s)}</text>`;
 const rotText = (x, y, s, deg, cls = '') =>
   `<text x="${r1(x)}" y="${r1(y)}" text-anchor="middle" transform="rotate(${r1(deg)} ${r1(x)} ${r1(y)})"${cls ? ` class="${cls}"` : ''}>${esc(s)}</text>`;
@@ -32,7 +32,7 @@ export function box(vb, body, label, caption = '') {
 }
 
 /** 底部的數值列：放不下就自動換行 */
-function legend(vbW, y0, items) {
+export function legend(vbW, y0, items) {
   const rows = [[]]; let w = 0;
   for (const it of items) {
     const iw = textWidth(it) + 18;

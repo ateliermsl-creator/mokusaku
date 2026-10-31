@@ -3,6 +3,7 @@ import { createGlossaryUI } from './glossary-ui.js';
 import { applyKey, softEval } from './keypad.js';
 import { renderFour } from './four.js';
 import { renderLuban, renderLubanSummary } from './luban-ui.js';
+import { renderJointPage } from './joint-ui.js';
 import {
   roofSection, hipSection, haitsukePlan, arcFigure, arcConcept, diagFigure, squareCheck, tri345,
   unitLadder, composition,
@@ -14,7 +15,7 @@ import {
 
 const $ = (id) => document.getElementById(id);
 const STORE = 'mokusaku.v1';
-const VERSION = '17'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
+const VERSION = '18'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
 
 /* ---------- 儲存（localStorage 可能被擋，全部包 try） ---------- */
 let state = {};
@@ -193,7 +194,7 @@ applySysKb();
    點長度欄位 → 底部升起和台尺混算同一組按鍵；上方即時顯示算出幾 mm、幾丈幾尺。 */
 const sheetEl = $('sheet');
 let sheetTarget = null;
-const sheetFieldSel = '#tab-roof input.len, #tab-arc input.len, #tab-diag input.len';
+const sheetFieldSel = '#tab-roof input.len, #tab-arc input.len, #tab-diag input.len, #page-joint input.len';
 const fieldTitle = (el) => { const sp = el.closest('label') && el.closest('label').querySelector('span'); return sp ? sp.textContent.trim() : '長度'; };
 
 function updateSheetLive() {
@@ -451,6 +452,7 @@ $('arc-concept').innerHTML = arcConcept();
 /* ---------- 輸入欄位共通：還原 / 儲存 / 更新 ---------- */
 const renderers = {
   'tab-mix': renderCalc, 'tab-roof': renderRoof, 'tab-arc': renderArc, 'tab-diag': renderDiag, 'tab-luban': renderLubanTab,
+  'page-joint': () => renderJointPage({ $, state, save, readLen }),
 };
 document.querySelectorAll('main input, main select').forEach((el) => {
   if (el.classList.contains('nopersist')) return; // 搜尋框、新增詞條表單不存草稿
@@ -466,10 +468,11 @@ document.querySelectorAll('main input, main select').forEach((el) => {
 
 /* ---------- 路由 ----------
    #/ 首頁　#/install 安裝教學
+   #/joint[/oikake|kama|koshikake] 仕口・継手 比例速查
    #/calc[/mix|roof|arc|diag] 木作計算機（四個分頁；沒寫分頁就開上次用的）
    舊網址 #/roof #/arc #/diag 會自動導到 #/calc/… */
 const CALC_TABS = { mix: '台尺混算', roof: '屋頂坡度', arc: '弧線半徑', diag: '對角線', luban: '魯班尺' };
-const PAGES = ['home', 'install', 'calc', 'glossary'];
+const PAGES = ['home', 'install', 'calc', 'glossary', 'joint'];
 const glossary = createGlossaryUI({ state, save });
 const LEGACY = ['roof', 'arc', 'diag'];
 
@@ -491,8 +494,10 @@ function route() {
     if (a.dataset.sub === sub && isCalc) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   });
 
+  if (page === 'joint' && sub) { state.jointId = sub; save(); }
   const title = isCalc ? '木作計算機'
     : page === 'install' ? '加到手機桌面'
+      : page === 'joint' ? '仕口・継手 比例速查'
       : page === 'glossary' ? '台日大木作名詞＆構架對照庫' : '日式大木作工具箱';
   $('topbar').hidden = page === 'home';
   $('subtabs').hidden = !isCalc;
@@ -506,6 +511,7 @@ function route() {
   if (page === 'home') renderHome();
   if (page === 'install') $('inAppWarn').hidden = !inApp();
   if (page === 'glossary') glossary.render();
+  if (page === 'joint') renderers['page-joint']();
   window.scrollTo(0, 0);
 }
 
