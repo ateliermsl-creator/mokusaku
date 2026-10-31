@@ -1,0 +1,10 @@
+{
+  "name": "mokusaku-toolbox",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "大木作・規矩術工具箱 (PWA)",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}

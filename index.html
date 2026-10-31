@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>木作工具箱</title>
+  <meta name="description" content="大木作・規矩術工具箱：尺貫法混算、屋根勾配、隅木、配付垂木、R 弧計算">
+  <meta name="theme-color" content="#2a2118">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="木作工具箱">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>木作工具箱</h1>
+    <span class="sub">大木作・規矩術</span>
+  </header>
+
+  <main>
+    <!-- 尺貫混算 -->
+    <section id="tab-calc" class="panel" hidden>
+      <label class="field">
+        <span>算式</span>
+        <input id="calc-expr" class="len" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false"
+               placeholder="例：3間2尺5寸 + 120mm − 15.5mm">
+      </label>
+      <div id="calc-out" class="result" aria-live="polite"></div>
+      <div class="row">
+        <button id="calc-save" type="button" class="btn primary">記録</button>
+        <button id="calc-clear" type="button" class="btn">清除</button>
+      </div>
+      <h2>履歴</h2>
+      <ul id="history" class="history"></ul>
+      <p class="hint">
+        單位：間（6尺）・尺・寸・分・厘・mm・cm・m。<br>
+        1尺 = 10/33 m ≈ 303.03 mm（台尺相同）。沒寫單位的數字當作 mm。<br>
+        下方按鍵列可直接插入單位與符號。
+      </p>
+    </section>
+
+    <!-- 屋根・隅木・垂木 -->
+    <section id="tab-roof" class="panel" hidden>
+      <div class="grid2">
+        <label class="field">
+          <span>勾配の入力方式</span>
+          <select id="roof-mode">
+            <option value="kobai">寸勾配（水平 10 對 立上り）</option>
+            <option value="angle">角度（°）</option>
+            <option value="riserun">立上り ÷ 水平長</option>
+          </select>
+        </label>
+        <label class="field" id="roof-f-kobai">
+          <span>寸勾配</span>
+          <input id="roof-kobai" type="number" inputmode="decimal" step="0.1" min="0" placeholder="例：4.5">
+        </label>
+        <label class="field" id="roof-f-angle" hidden>
+          <span>角度（°）</span>
+          <input id="roof-angle" type="number" inputmode="decimal" step="0.1" min="0" max="89.9" placeholder="例：24.2">
+        </label>
+        <label class="field" id="roof-f-rise" hidden>
+          <span>立上り</span>
+          <input id="roof-rise" class="len" type="text" inputmode="text" autocomplete="off" placeholder="例：1尺5寸">
+        </label>
+        <label class="field" id="roof-f-run" hidden>
+          <span>水平長</span>
+          <input id="roof-run" class="len" type="text" inputmode="text" autocomplete="off" placeholder="例：3尺3寸">
+        </label>
+      </div>
+      <div id="roof-err" class="err" role="alert"></div>
+      <div id="roof-basic" class="card"></div>
+      <svg id="roof-fig" class="fig" viewBox="0 0 220 130" role="img" aria-label="勾殳玄圖"></svg>
+
+      <h2>長さを出す</h2>
+      <label class="field">
+        <span>單邊水平長 a（軒桁方向，從桁到棟的水平距離）</span>
+        <input id="roof-a" class="len" type="text" inputmode="text" autocomplete="off" placeholder="例：2間 或 3640">
+      </label>
+      <div id="roof-a-err" class="err" role="alert"></div>
+      <div id="roof-lengths" class="card"></div>
+
+      <h2>配付垂木（隅木に向かって短くなる）</h2>
+      <div class="grid2">
+        <label class="field">
+          <span>垂木ピッチ（間距）</span>
+          <input id="roof-pitch" class="len" type="text" inputmode="text" autocomplete="off" placeholder="例：1尺 或 303">
+        </label>
+        <label class="field">
+          <span>先頭垂木的水平長</span>
+          <input id="roof-first" class="len" type="text" inputmode="text" autocomplete="off" placeholder="空白 = 用上面的 a">
+        </label>
+      </div>
+      <div id="roof-h-err" class="err" role="alert"></div>
+      <div id="roof-haitsuke" class="card"></div>
+      <p class="hint">
+        公式（水平 殳 = 10）：垂木 玄 = √(10² + 勾²)；隅木 長玄 = √(200 + 勾²)；
+        隅勾配 = 勾 ÷ √2。算出的是理論值，軒先的納まり、鼻隠し、木負的削り等請另外加減。
+      </p>
+    </section>
+
+    <!-- R 弧 -->
+    <section id="tab-arc" class="panel" hidden>
+      <div class="grid2">
+        <label class="field">
+          <span>弦長 c</span>
+          <input id="arc-c" class="len" type="text" inputmode="text" autocomplete="off" placeholder="例：2間">
+        </label>
+        <label class="field">
+          <span>已知</span>
+          <select id="arc-mode">
+            <option value="h">矢高 h（拱高）</option>
+            <option value="R">半徑 R</option>
+          </select>
+        </label>
+        <label class="field" style="grid-column: 1 / -1">
+          <span id="arc-v-label">矢高 h</span>
+          <input id="arc-v" class="len" type="text" inputmode="text" autocomplete="off" placeholder="例：3寸">
+        </label>
+        <label class="field">
+          <span>弦を等分する數</span>
+          <input id="arc-n" type="number" inputmode="numeric" min="2" max="40" step="1" value="8">
+        </label>
+      </div>
+      <div id="arc-err" class="err" role="alert"></div>
+      <div id="arc-out" class="card"></div>
+      <svg id="arc-fig" class="fig" viewBox="0 0 220 120" role="img" aria-label="弧の図"></svg>
+      <div id="arc-table"></div>
+      <p class="hint">
+        R = (c²/4 + h²) ÷ 2h。分點高度＝從弦線往弧面量的高度，
+        可在弦線上依等分點量出，再用薄板或棒條連成弧線。
+      </p>
+    </section>
+
+    <!-- 對角線 -->
+    <section id="tab-diag" class="panel" hidden>
+      <div class="grid2">
+        <label class="field">
+          <span>縦（短邊）</span>
+          <input id="diag-a" class="len" type="text" inputmode="text" autocomplete="off" placeholder="例：3間">
+        </label>
+        <label class="field">
+          <span>横（長邊）</span>
+          <input id="diag-b" class="len" type="text" inputmode="text" autocomplete="off" placeholder="例：4間">
+        </label>
+      </div>
+      <div id="diag-err" class="err" role="alert"></div>
+      <div id="diag-out" class="card"></div>
+      <h2>矩出し 檢查（量到的兩條對角線）</h2>
+      <div class="grid2">
+        <label class="field">
+          <span>對角線 ①</span>
+          <input id="diag-d1" class="len" type="text" inputmode="text" autocomplete="off" placeholder="例：7280">
+        </label>
+        <label class="field">
+          <span>對角線 ②</span>
+          <input id="diag-d2" class="len" type="text" inputmode="text" autocomplete="off" placeholder="例：7284">
+        </label>
+      </div>
+      <div id="diag-chk-err" class="err" role="alert"></div>
+      <div id="diag-chk" class="card"></div>
+    </section>
+  </main>
+
+  <div class="keys" id="keys" aria-label="快速輸入">
+    <button type="button" data-ins="間">間</button>
+    <button type="button" data-ins="尺">尺</button>
+    <button type="button" data-ins="寸">寸</button>
+    <button type="button" data-ins="分">分</button>
+    <button type="button" data-ins="mm">mm</button>
+    <button type="button" data-ins=" + ">＋</button>
+    <button type="button" data-ins=" − ">−</button>
+    <button type="button" data-ins=" × ">×</button>
+    <button type="button" data-ins=" ÷ ">÷</button>
+    <button type="button" data-ins="(">(</button>
+    <button type="button" data-ins=")">)</button>
+    <button type="button" data-ins=".">.</button>
+    <button type="button" data-act="bs" aria-label="退格">⌫</button>
+  </div>
+
+  <nav class="tabs" id="tabs">
+    <button type="button" data-tab="calc"><b>算</b><i>尺貫混算</i></button>
+    <button type="button" data-tab="roof"><b>勾</b><i>屋根・隅木</i></button>
+    <button type="button" data-tab="arc"><b>弧</b><i>R・弧</i></button>
+    <button type="button" data-tab="diag"><b>矩</b><i>對角線</i></button>
+  </nav>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
