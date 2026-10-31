@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="zh-Hant-TW" data-v="11">
+<html lang="zh-Hant-TW" data-v="13">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>日式大木作工具箱</title>
   <meta name="description" content="日式大木作工具箱：台尺與公制混算、屋頂坡度、角梁、椽木、弧線半徑計算，可離線使用">
-  <meta name="theme-color" content="#2a2118">
+  <meta name="theme-color" content="#38284f">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -46,6 +46,21 @@
       <a class="tool" href="#/glossary"><div class="ph">📖</div><div><b>台日大木作名詞＆構架對照庫</b><small>日本・台灣傳統・現場行話四維對照；點構架圖查名稱</small></div><span class="arrow">›</span></a>
       <a class="tool" href="#/install"><div class="ph">📲</div><div><b>加到手機桌面</b><small>像 App 一樣使用・教學</small></div><span class="arrow">›</span></a>
       <div class="tool soon"><div class="ph">＋</div><div><b>更多工具開發中</b><small>仕口・継手放樣圖鑑、轉角樓梯、等分割、下料 <span class="jp">木取り</span>　敬請期待</small></div></div>
+      <details class="panel reiwa" id="reiwa">
+        <summary><b>🌸 令和三色　櫻・堇・梅</b><small>色彩物語</small></summary>
+        <p class="r-lead">「令和」出自《萬葉集》卷五〈梅花之歌三十二首〉的序文，是大伴旅人在大宰府的宅邸辦「梅花之宴」時留下的文字：
+          <q>初春令月，氣淑風和，梅披鏡前之粉，蘭薰珮後之香。</q>
+          「令」與「和」各取自其中一字。這個工具箱用三個日本傳統色名當配色靈感：</p>
+        <ul class="r-list">
+          <li><span class="sw sakura" aria-hidden="true"></span><div><b>櫻 <i class="jp">さくら・桜色</i></b>
+            <p>櫻花花瓣的顏色，是極淡的粉紅。</p><p class="use">用在：頁面底色與標題區，讓畫面柔和不刺眼。</p></div></li>
+          <li><span class="sw sumire" aria-hidden="true"></span><div><b>堇 <i class="jp">すみれ・菫色</i></b>
+            <p>堇是春天開在野地裡的紫色小花，菫色是帶藍的紫。</p><p class="use">用在：主色，按鈕、重點文字與標題列。</p></div></li>
+          <li><span class="sw ume" aria-hidden="true"></span><div><b>梅 <i class="jp">うめ・梅色</i></b>
+            <p>梅是令和出處序文裡寫到的花，在春寒未退時先開，色名是偏紅的粉。</p><p class="use">用在：選取中的分頁與提示，像一點亮色。</p></div></li>
+        </ul>
+        <p class="note">三色是本站的配色靈感，不是官方色票；色碼為了讓文字看得清楚，另外調整過。</p>
+      </details>
       <details class="panel" id="updates" hidden><summary><b>📢 最新更新</b> <small id="updDate"></small></summary><div id="updBody"></div></details>
     </section>
 
@@ -198,11 +213,11 @@
         </label>
         <label class="field" id="roof-f-rise" hidden>
           <span>立上高 <i class="jp">立上り</i></span>
-          <div class="lenfield"><input id="roof-rise" class="num" type="text" inputmode="decimal" autocomplete="off" placeholder="1.5"><select id="roof-rise-u" class="unit" aria-label="單位"><option value="丈">丈</option><option value="間">間</option><option value="尺" selected>尺</option><option value="寸">寸</option><option value="分">分</option><option value="mm">mm</option><option value="cm">cm</option><option value="m">m</option></select></div>
+          <input id="roof-rise" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：1 尺 5 寸）">
         </label>
         <label class="field" id="roof-f-run" hidden>
           <span>水平長</span>
-          <div class="lenfield"><input id="roof-run" class="num" type="text" inputmode="decimal" autocomplete="off" placeholder="3.3"><select id="roof-run-u" class="unit" aria-label="單位"><option value="丈">丈</option><option value="間">間</option><option value="尺" selected>尺</option><option value="寸">寸</option><option value="分">分</option><option value="mm">mm</option><option value="cm">cm</option><option value="m">m</option></select></div>
+          <input id="roof-run" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：3 尺 3 寸）">
         </label>
       </div>
       <div id="roof-err" class="err" role="alert"></div>
@@ -212,7 +227,7 @@
       <h2>計算長度</h2>
       <label class="field">
         <span>單邊水平長 a（從簷桁到屋脊的水平距離）</span>
-        <div class="lenfield"><input id="roof-a" class="num" type="text" inputmode="decimal" autocomplete="off" placeholder="12"><select id="roof-a-u" class="unit" aria-label="單位"><option value="丈">丈</option><option value="間">間</option><option value="尺" selected>尺</option><option value="寸">寸</option><option value="分">分</option><option value="mm">mm</option><option value="cm">cm</option><option value="m">m</option></select></div>
+        <input id="roof-a" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：2 丈）">
       </label>
       <div id="roof-a-err" class="err" role="alert"></div>
       <div id="roof-lengths" class="card"></div>
@@ -222,11 +237,11 @@
       <div class="grid2">
         <label class="field">
           <span>椽木間距 <i class="jp">ピッチ</i></span>
-          <div class="lenfield"><input id="roof-pitch" class="num" type="text" inputmode="decimal" autocomplete="off" placeholder="1"><select id="roof-pitch-u" class="unit" aria-label="單位"><option value="丈">丈</option><option value="間">間</option><option value="尺" selected>尺</option><option value="寸">寸</option><option value="分">分</option><option value="mm">mm</option><option value="cm">cm</option><option value="m">m</option></select></div>
+          <input id="roof-pitch" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：1 尺）">
         </label>
         <label class="field">
           <span>第一支椽木的水平長</span>
-          <div class="lenfield"><input id="roof-first" class="num" type="text" inputmode="decimal" autocomplete="off" placeholder="空白 = 用上面的 a"><select id="roof-first-u" class="unit" aria-label="單位"><option value="丈">丈</option><option value="間">間</option><option value="尺" selected>尺</option><option value="寸">寸</option><option value="分">分</option><option value="mm">mm</option><option value="cm">cm</option><option value="m">m</option></select></div>
+          <input id="roof-first" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="空白 = 用上面的 a">
         </label>
       </div>
       <div id="roof-h-err" class="err" role="alert"></div>
@@ -243,7 +258,7 @@
       <div class="grid2">
         <label class="field">
           <span>弦長 c</span>
-          <div class="lenfield"><input id="arc-c" class="num" type="text" inputmode="decimal" autocomplete="off" placeholder="12"><select id="arc-c-u" class="unit" aria-label="單位"><option value="丈">丈</option><option value="間">間</option><option value="尺" selected>尺</option><option value="寸">寸</option><option value="分">分</option><option value="mm">mm</option><option value="cm">cm</option><option value="m">m</option></select></div>
+          <input id="arc-c" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：2 丈）">
         </label>
         <label class="field">
           <span>已知</span>
@@ -254,7 +269,7 @@
         </label>
         <label class="field" style="grid-column: 1 / -1">
           <span id="arc-v-label">弧高 h</span>
-          <div class="lenfield"><input id="arc-v" class="num" type="text" inputmode="decimal" autocomplete="off" placeholder="3"><select id="arc-v-u" class="unit" aria-label="單位"><option value="丈">丈</option><option value="間">間</option><option value="尺">尺</option><option value="寸" selected>寸</option><option value="分">分</option><option value="mm">mm</option><option value="cm">cm</option><option value="m">m</option></select></div>
+          <input id="arc-v" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：3 寸）">
         </label>
         <label class="field">
           <span>弦等分數</span>
@@ -278,11 +293,11 @@
       <div class="grid2">
         <label class="field">
           <span>短邊</span>
-          <div class="lenfield"><input id="diag-a" class="num" type="text" inputmode="decimal" autocomplete="off" placeholder="18"><select id="diag-a-u" class="unit" aria-label="單位"><option value="丈">丈</option><option value="間">間</option><option value="尺" selected>尺</option><option value="寸">寸</option><option value="分">分</option><option value="mm">mm</option><option value="cm">cm</option><option value="m">m</option></select></div>
+          <input id="diag-a" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：3 間）">
         </label>
         <label class="field">
           <span>長邊</span>
-          <div class="lenfield"><input id="diag-b" class="num" type="text" inputmode="decimal" autocomplete="off" placeholder="24"><select id="diag-b-u" class="unit" aria-label="單位"><option value="丈">丈</option><option value="間">間</option><option value="尺" selected>尺</option><option value="寸">寸</option><option value="分">分</option><option value="mm">mm</option><option value="cm">cm</option><option value="m">m</option></select></div>
+          <input id="diag-b" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：4 間）">
         </label>
       </div>
       <div id="diag-err" class="err" role="alert"></div>
@@ -293,11 +308,11 @@
       <div class="grid2">
         <label class="field">
           <span>對角線 ①</span>
-          <div class="lenfield"><input id="diag-d1" class="num" type="text" inputmode="decimal" autocomplete="off" placeholder="7280"><select id="diag-d1-u" class="unit" aria-label="單位"><option value="丈">丈</option><option value="間">間</option><option value="尺">尺</option><option value="寸">寸</option><option value="分">分</option><option value="mm" selected>mm</option><option value="cm">cm</option><option value="m">m</option></select></div>
+          <input id="diag-d1" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：7280 mm）">
         </label>
         <label class="field">
           <span>對角線 ②</span>
-          <div class="lenfield"><input id="diag-d2" class="num" type="text" inputmode="decimal" autocomplete="off" placeholder="7284"><select id="diag-d2-u" class="unit" aria-label="單位"><option value="丈">丈</option><option value="間">間</option><option value="尺">尺</option><option value="寸">寸</option><option value="分">分</option><option value="mm" selected>mm</option><option value="cm">cm</option><option value="m">m</option></select></div>
+          <input id="diag-d2" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：7284 mm）">
         </label>
       </div>
       <div id="diag-chk-err" class="err" role="alert"></div>
@@ -309,6 +324,16 @@
 
     </section><!-- /page-calc -->
   </main>
+
+  <!-- 長度輸入面板：點屋頂坡度、弧線半徑、對角線的長度欄位時從底部升起 -->
+  <div class="sheet" id="sheet" role="group" aria-label="輸入長度" hidden>
+    <div class="sheet-head">
+      <div class="sheet-title" id="sheet-title"></div>
+      <button type="button" class="sheet-done" id="sheet-done">完成</button>
+    </div>
+    <div class="sheet-live" id="sheet-live" aria-live="polite"></div>
+    <div class="keypad" id="sheet-keypad" role="group" aria-label="輸入按鍵"></div>
+  </div>
 
   <script type="module" src="js/app.js"></script>
 </body>

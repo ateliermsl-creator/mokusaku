@@ -14,7 +14,7 @@ import {
 
 const $ = (id) => document.getElementById(id);
 const STORE = 'mokusaku.v1';
-const VERSION = '11'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
+const VERSION = '13'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
 
 /* ---------- 儲存（localStorage 可能被擋，全部包 try） ---------- */
 let state = {};
@@ -32,20 +32,10 @@ const len = (label, mm) => `
 const plain = (label, text) => `<div class="line"><span class="k">${label}</span><span class="v">${text}</span></div>`;
 const n = (v, d = 3) => `${+v.toFixed(d)}`;
 
-/**
- * 長度欄位 = 「數字」＋「單位下拉」。只打數字時，單位取自下拉選單；
- * 如果欄位裡已經寫了完整算式（例如 3尺5寸），就直接照算式算。
- */
-function lenExpr(id) {
-  const t = $(id).value.trim();
-  const u = $(`${id}-u`);
-  return u && /^[\d.]+$/.test(t) ? `${t}${u.value}` : t;
-}
-
 /** 嘗試解析長度欄位：回傳 {mm} 或 {error} 或 {} (空) */
 function readLen(id, errId) {
   try {
-    const mm = evalLength(lenExpr(id));
+    const mm = evalLength($(id).value);
     if (errId) $(errId).textContent = '';
     return mm === null ? {} : { mm };
   } catch (e) {
@@ -156,9 +146,11 @@ const KEYPAD_HTML = `
 <button type="button" class="k sq" data-k="×√2" aria-label="乘以根號二：裏目、對角線">×√2</button>
 <button type="button" class="k sq" data-k="÷√2" aria-label="除以根號二：角目">÷√2</button>
 `;
-function wireKeypad(host, input) {
+function wireKeypad(host, getInput) {
   host.innerHTML = KEYPAD_HTML;
   const press = (key) => {
+    const input = getInput();
+    if (!input) return;
     const s0 = input.selectionStart ?? input.value.length;
     const e0 = input.selectionEnd ?? s0;
     const r = applyKey(input.value, s0, e0, key);
@@ -178,8 +170,8 @@ function wireKeypad(host, input) {
     if (b && e.detail === 0) press(b.dataset.k);
   });
 }
-wireKeypad($('keypad'), $('calc-expr'));
-wireKeypad($('lb-keypad'), $('lb-len'));
+wireKeypad($('keypad'), () => $('calc-expr'));
+wireKeypad($('lb-keypad'), () => $('lb-len'));
 
 // 預設不跳手機鍵盤（inputmode=none）；需要打其他字時可切換（兩個分頁共用這個選擇）
 function applySysKb() {
@@ -196,6 +188,68 @@ for (const [inp, btn] of [['calc-expr', 'calc-kb'], ['lb-len', 'lb-kb']]) {
   });
 }
 applySysKb();
+
+/* ---------- 長度輸入面板（屋頂坡度、弧線半徑、對角線） ----------
+   點長度欄位 → 底部升起和台尺混算同一組按鍵；上方即時顯示算出幾 mm、幾丈幾尺。 */
+const sheetEl = $('sheet');
+let sheetTarget = null;
+const sheetFieldSel = '#tab-roof input.len, #tab-arc input.len, #tab-diag input.len';
+const fieldTitle = (el) => { const sp = el.closest('label') && el.closest('label').querySelector('span'); return sp ? sp.textContent.trim() : '長度'; };
+
+function updateSheetLive() {
+  if (!sheetTarget) return;
+  const r = softEval(sheetTarget.value);
+  let text, bad = false;
+  if (r.empty) text = '點數字，再點單位（丈・尺・寸・分・間・mm）';
+  else if (r.error) { text = r.error.message; bad = true; }
+  else if (r.incomplete) text = r.pending ? '請點單位' : '請繼續輸入數字';
+  else text = `= ${fmtMm(r.mm, 1)} mm（${toTaiShaku(r.mm)}）${r.partial ? '・還沒輸入完' : r.pending ? '・沒點單位會當作 mm' : ''}`;
+  $('sheet-live').textContent = text;
+  $('sheet-live').classList.toggle('bad', bad);
+}
+function ensureVisible(el) { // 讓正在編輯的欄位停在面板上方、標題列下方
+  const sh = sheetEl.offsetHeight;
+  const limit = innerHeight - sh - 12;
+  const top = $('topbar').getBoundingClientRect().bottom + 8;
+  const r = el.getBoundingClientRect();
+  if (r.bottom > limit) scrollBy({ top: r.bottom - limit + 8 });
+  else if (r.top < top) scrollBy({ top: r.top - top });
+}
+function openSheet(el) {
+  sheetTarget = el;
+  $('sheet-title').textContent = fieldTitle(el);
+  sheetEl.hidden = false;
+  document.body.classList.add('sheet-open');
+  updateSheetLive();
+  requestAnimationFrame(() => {
+    document.body.style.setProperty('--sheet-h', `${sheetEl.offsetHeight}px`);
+    ensureVisible(el);
+  });
+}
+function closeSheet() {
+  if (!sheetTarget) return;
+  sheetTarget = null;
+  sheetEl.hidden = true;
+  document.body.classList.remove('sheet-open');
+}
+wireKeypad($('sheet-keypad'), () => sheetTarget);
+document.querySelectorAll(sheetFieldSel).forEach((el) => {
+  el.addEventListener('focus', () => openSheet(el));
+  el.addEventListener('click', () => { if (sheetTarget !== el) openSheet(el); });
+});
+$('sheet-done').addEventListener('click', () => { const t = sheetTarget; closeSheet(); if (t) t.blur(); });
+document.addEventListener('input', (e) => { if (e.target === sheetTarget) updateSheetLive(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
+document.addEventListener('focusin', (e) => { // 跳到別的（非長度）欄位 → 收起面板，改用該欄位自己的輸入方式
+  if (sheetTarget && !sheetEl.contains(e.target) && !e.target.matches(sheetFieldSel)) closeSheet();
+});
+document.addEventListener('pointerdown', (e) => { // 點面板與長度欄位以外的地方 → 收起
+  if (!sheetTarget || sheetEl.contains(e.target)) return;
+  const lab = e.target.closest('label');
+  if (e.target.closest('input.len') || (lab && lab.querySelector('input.len'))) return;
+  closeSheet();
+});
+addEventListener('resize', () => { if (sheetTarget) ensureVisible(sheetTarget); });
 
 /* ---------- 2. 屋根・隅木・垂木 ---------- */
 function roofKobai() {
@@ -214,8 +268,8 @@ function roofKobai() {
       const v = parseFloat($('roof-angle').value);
       return Number.isFinite(v) ? kobaiFromAngle(v) : null;
     }
-    const rise = evalLength(lenExpr('roof-rise'));
-    const run = evalLength(lenExpr('roof-run'));
+    const rise = evalLength($('roof-rise').value);
+    const run = evalLength($('roof-run').value);
     if (rise === null || run === null) return null;
     return kobaiFromRiseRun(rise, run);
   } catch (e) {
@@ -379,6 +433,21 @@ $('tri-fig').innerHTML = tri345();
 $('mix-ladder').innerHTML = unitLadder();
 $('arc-concept').innerHTML = arcConcept();
 
+/* ---------- 升級：把 v11 存的「數字＋單位下拉」合成「12尺」 ---------- */
+(function migrateUnitSelects() {
+  const inp = state.inputs;
+  if (!inp) return;
+  let changed = false;
+  for (const key of Object.keys(inp)) {
+    if (!key.endsWith('-u')) continue;
+    const id = key.slice(0, -2), v = inp[id];
+    if (typeof v === 'string' && /^[\d.]+$/.test(v.trim())) inp[id] = v.trim() + inp[key];
+    delete inp[key];
+    changed = true;
+  }
+  if (changed) save();
+})();
+
 /* ---------- 輸入欄位共通：還原 / 儲存 / 更新 ---------- */
 const renderers = {
   'tab-mix': renderCalc, 'tab-roof': renderRoof, 'tab-arc': renderArc, 'tab-diag': renderDiag, 'tab-luban': renderLubanTab,
@@ -432,6 +501,7 @@ function route() {
   document.title = page === 'home' ? '日式大木作工具箱'
     : `${isCalc ? CALC_TABS[sub] : title}｜日式大木作工具箱`;
 
+  closeSheet();
   if (isCalc) renderers[`tab-${sub}`]();
   if (page === 'home') renderHome();
   if (page === 'install') $('inAppWarn').hidden = !inApp();
