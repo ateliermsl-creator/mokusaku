@@ -7,6 +7,7 @@ import {
 
 const $ = (id) => document.getElementById(id);
 const STORE = 'mokusaku.v1';
+const VERSION = '6'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
 
 /* ---------- 儲存（localStorage 可能被擋，全部包 try） ---------- */
 let state = {};
@@ -378,7 +379,42 @@ addEventListener('hashchange', route);
 renderHistory();
 route();
 
-/* ---------- PWA ---------- */
+/* ---------- PWA：更新提示與版本一致檢查 ---------- */
+function showBar(text, btnText, onClick) {
+  if ($('updBar')) return;
+  const bar = document.createElement('div');
+  bar.id = 'updBar';
+  bar.setAttribute('role', 'status');
+  const span = document.createElement('span');
+  span.textContent = text;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = btnText;
+  btn.addEventListener('click', onClick);
+  bar.append(span, btn);
+  document.body.prepend(bar);
+}
+
+async function resetAndReload() {
+  try {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(regs.map((r) => r.unregister()));
+    await Promise.all((await caches.keys()).map((k) => caches.delete(k)));
+  } catch { /* ignore */ }
+  location.replace(`${location.pathname}?r=${Date.now()}${location.hash}`);
+}
+
+// 頁面 HTML 與 JS 版本不一致（舊快取混版）時，給使用者一個明確的出路，而不是一片空白
+if (document.documentElement.dataset.v !== VERSION) {
+  showBar('偵測到新舊版本混在一起，畫面可能不完整。', '清除快取並重新載入', resetAndReload);
+}
+
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+  addEventListener('load', () => {
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (hadController) showBar('已有新版本。', '重新載入', () => location.reload());
+    });
+  });
 }

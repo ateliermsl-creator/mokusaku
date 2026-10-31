@@ -59,7 +59,7 @@ python3 -m http.server 8000   # 本機預覽 http://localhost:8000
 - `js/section.js`：角材斷面輸入解析（`120×120 mm`、`4寸角`、`4寸×5寸`），供之後的仕口・継手圖鑑使用
 - `js/app.js`：介面與路由（首頁 `#/`、木作計算機 `#/calc/mix|roof|arc|diag`、對照庫 `#/glossary`、安裝教學 `#/install`；舊網址 `#/roof` `#/arc` `#/diag` 會自動導向）
 - `updates.json`：首頁「最新更新」的內容
-- `sw.js`：離線快取。**改了程式後把 `CACHE` 版本號加 1**，使用者才會拿到新版
+- `sw.js`：離線快取。**改了任何檔案後，要同時把三處版本號加 1 並保持一致**：`sw.js` 的 `VERSION`、`js/app.js` 的 `VERSION`、`index.html` 的 `<html data-v>`，使用者才會拿到新版（`npm test` 會檢查）
 
 ## 上線（GitHub Pages）
 
