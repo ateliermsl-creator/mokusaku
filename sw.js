@@ -3,12 +3,12 @@
 //  - 全部抓完才啟用；執行期只從「當前版本」的快取取檔，所以不會出現「新 HTML 配舊 JS」的混版
 //  - 改了任何檔案後：把 VERSION 加 1，並同步改 js/app.js 的 VERSION 與 index.html 的 <html data-v>
 //    （tests/version.test.js 會檢查三處一致，以及 app.js 匯入的檔案都在 ASSETS 裡）
-const VERSION = 9;
+const VERSION = 10;
 const CACHE = `mokusaku-v${VERSION}`;
 const ASSETS = [
   './', 'index.html', 'css/style.css',
   'js/app.js', 'js/units.js', 'js/calc.js', 'js/section.js', 'js/keypad.js',
-  'js/dom.js', 'js/figures.js', 'js/luban.js', 'js/four.js',
+  'js/dom.js', 'js/figures.js', 'js/luban.js', 'js/luban-ui.js', 'js/four.js',
   'js/glossary.js', 'js/glossary-search.js', 'js/glossary-ui.js', 'js/diagrams.js',
   'manifest.webmanifest', 'updates.json',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png',

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { RULERS, checkRuler } from '../js/luban.js';
+import { RULERS, checkRuler, goodRangesNear } from '../js/luban.js';
 
 const men = RULERS.men, ding = RULERS.ding;
 const close = (a, b, eps = 1e-6) => assert.ok(Math.abs(a - b) < eps, `${a} ≉ ${b}`);
@@ -83,4 +83,36 @@ test('丁蘭尺（循環 390 mm，十格，每格 39 mm）', () => {
   assert.equal(at(370).band, '財'); assert.equal(at(370).status, 'good');
   const c = at(45);                                       // 害：往後退到丁，往前進到旺
   assert.equal(c.back.band, '丁'); assert.equal(c.fwd.band, '旺');
+});
+
+test('附近的吉位區間：與「建議」一致、依距離排序', () => {
+  const c = checkRuler(men, 429, 500);                       // 凶（病）；建議 −20 → 財、+92 → 義
+  const near = goodRangesNear(men, 429, 500, 100);
+  assert.ok(near.length >= 2);
+  assert.equal(near[0].delta, -c.back.delta); assert.equal(near[0].band, '財');
+  const fwd = near.find((x) => x.delta > 0);
+  assert.equal(fwd.delta, c.fwd.delta); assert.equal(fwd.band, '義');
+  // 依 |delta| 由小到大
+  for (let i = 1; i < near.length; i++) assert.ok(Math.abs(near[i].delta) >= Math.abs(near[i - 1].delta));
+  // 區間端點在搜尋範圍內、且是穩妥區
+  for (const x of near) {
+    assert.ok(x.from >= 400 - 1e-9 && x.to <= 600 + 1e-9 && x.from <= x.to);
+    assert.equal(checkRuler(men, 429, (x.from + x.to) / 2).status, 'good');
+    assert.equal(checkRuler(men, 429, 500 + x.delta).status, 'good', `delta ${x.delta}`);
+  }
+});
+
+test('附近的吉位區間：目前就在吉位時 delta = 0 排第一', () => {
+  const near = goodRangesNear(men, 429, 200, 50);            // 200 在義（160.9–214.5）
+  assert.equal(near[0].delta, 0); assert.equal(near[0].band, '義');
+  assert.ok(near[0].from <= 200 && near[0].to >= 200);
+});
+
+test('附近的吉位區間：範圍小到沒有吉位時回傳空陣列；跨循環也能找', () => {
+  assert.deepEqual(goodRangesNear(men, 429, 75, 5), []);      // 75±5 全在「病」
+  const wrap = goodRangesNear(men, 429, 425, 30);             // 接近一循環尾端，會跨到下一個循環的「財」
+  assert.ok(wrap.some((x) => x.band === '財' && x.from >= 429));
+  for (const ruler of [men, ding]) for (const cyc of ruler.cycles) for (let L = 0; L < 900; L += 13.7) {
+    for (const x of goodRangesNear(ruler, cyc.mm, L, 80)) assert.equal(checkRuler(ruler, cyc.mm, L + x.delta).status, 'good', `${ruler.id} ${L} ${x.delta}`);
+  }
 });

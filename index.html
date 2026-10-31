@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hant-TW" data-v="9">
+<html lang="zh-Hant-TW" data-v="10">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -24,6 +24,7 @@
       <a href="#/calc/roof" data-sub="roof"><b>屋頂坡度</b><i class="jp">勾配・隅木</i></a>
       <a href="#/calc/arc" data-sub="arc"><b>弧線半徑</b><i class="jp">R・矢高</i></a>
       <a href="#/calc/diag" data-sub="diag"><b>對角線</b><i class="jp">矩出し</i></a>
+      <a href="#/calc/luban" data-sub="luban"><b>魯班尺</b><i class="jp">字位檢核</i></a>
     </nav>
   </header>
 
@@ -137,45 +138,14 @@
       <div id="calc-out" class="result" aria-live="polite"></div>
       <p id="calc-hint" class="hint-line" aria-live="polite"></p>
 
-      <div class="keypad" id="keypad" role="group" aria-label="輸入按鍵">
-        <button type="button" class="k u" data-k="丈">丈</button>
-        <button type="button" class="k u" data-k="尺">尺</button>
-        <button type="button" class="k u" data-k="寸">寸</button>
-        <button type="button" class="k u" data-k="分">分</button>
-        <button type="button" class="k u" data-k="間">間</button>
-        <button type="button" class="k" data-k="7">7</button>
-        <button type="button" class="k" data-k="8">8</button>
-        <button type="button" class="k" data-k="9">9</button>
-        <button type="button" class="k op" data-k="÷">÷</button>
-        <button type="button" class="k fn" data-k="bs" aria-label="退格">⌫</button>
-        <button type="button" class="k" data-k="4">4</button>
-        <button type="button" class="k" data-k="5">5</button>
-        <button type="button" class="k" data-k="6">6</button>
-        <button type="button" class="k op" data-k="×">×</button>
-        <button type="button" class="k fn" data-k="ac" aria-label="全部清除">清除</button>
-        <button type="button" class="k" data-k="1">1</button>
-        <button type="button" class="k" data-k="2">2</button>
-        <button type="button" class="k" data-k="3">3</button>
-        <button type="button" class="k op" data-k="−">−</button>
-        <button type="button" class="k op" data-k="(">(</button>
-        <button type="button" class="k" data-k="0">0</button>
-        <button type="button" class="k" data-k=".">.</button>
-        <button type="button" class="k u" data-k="mm">mm</button>
-        <button type="button" class="k op" data-k="+">＋</button>
-        <button type="button" class="k op" data-k=")">)</button>
-        <button type="button" class="k u" data-k="厘">厘</button>
-        <button type="button" class="k u" data-k="cm">cm</button>
-        <button type="button" class="k u" data-k="m">m</button>
-        <button type="button" class="k sq" data-k="×√2" aria-label="乘以根號二：裏目、對角線">×√2</button>
-        <button type="button" class="k sq" data-k="÷√2" aria-label="除以根號二：角目">÷√2</button>
-      </div>
+      <div class="keypad" id="keypad" role="group" aria-label="輸入按鍵"></div>
 
       <div class="row">
         <button id="calc-save" type="button" class="btn primary">記錄</button>
         <button id="calc-kb" type="button" class="btn">⌨ 改用手機鍵盤</button>
       </div>
       <div id="mix-fig"></div>
-      <h2>四制同步換算 <i class="jp">公制・尺貫法・曲尺裏目・魯班尺</i></h2>
+      <h2>同步換算 <i class="jp">公制・尺貫法・曲尺裏目</i></h2>
       <div id="four-panel" class="four"></div>
       <h2>歷史紀錄 <i class="jp">履歴</i></h2>
       <ul id="history" class="history"></ul>
@@ -189,6 +159,22 @@
         1 丈 = 10 尺，1 間 = 6 尺（日式）。1 台尺 = 10/33 公尺 ≈ 303.03 mm，與日本的 1 尺相同。<br>
         點算式中間的位置，可以在那裡插入或修改。要輸入其他字，請按「改用手機鍵盤」。
       </p>
+    </section>
+
+    <!-- 魯班尺 -->
+    <section id="tab-luban" class="panel" hidden>
+      <label class="field">
+        <span>要檢核的長度（用下方按鍵輸入，例如門寬、櫥櫃深度）</span>
+        <input id="lb-len" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false"
+               placeholder="點數字，再點單位，例如：9 尺 5 寸">
+      </label>
+      <p id="lb-hint" class="hint-line" aria-live="polite"></p>
+      <div id="lb-sum" class="lb-sum" aria-live="polite"></div>
+      <div class="keypad" id="lb-keypad" role="group" aria-label="輸入按鍵"></div>
+      <div class="row">
+        <button id="lb-kb" type="button" class="btn">⌨ 改用手機鍵盤</button>
+      </div>
+      <div id="lb-panel" class="four"></div>
     </section>
 
     <!-- 屋頂坡度・角梁・椽木 -->

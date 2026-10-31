@@ -2,6 +2,7 @@ import { evalLength, toKenShaku, toTaiShaku, fmtMm, toShaku } from './units.js';
 import { createGlossaryUI } from './glossary-ui.js';
 import { applyKey, softEval } from './keypad.js';
 import { renderFour } from './four.js';
+import { renderLuban, renderLubanSummary } from './luban-ui.js';
 import {
   roofSection, hipSection, haitsukePlan, arcFigure, arcConcept, diagFigure, squareCheck, tri345,
   unitLadder, composition,
@@ -13,7 +14,7 @@ import {
 
 const $ = (id) => document.getElementById(id);
 const STORE = 'mokusaku.v1';
-const VERSION = '9'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
+const VERSION = '10'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
 
 /* ---------- 儲存（localStorage 可能被擋，全部包 try） ---------- */
 let state = {};
@@ -47,20 +48,8 @@ function readLen(id, errId) {
 /* ---------- 1. 尺貫混算 ---------- */
 let history = Array.isArray(state.history) ? state.history : [];
 
-const luban = state.luban && typeof state.luban === 'object' ? state.luban : {}; // 魯班尺一循環的長度選擇
-let lastMm = null;
-function setFour(mm, partial) {
-  lastMm = mm;
-  renderFour($('four-panel'), mm, {
-    cfg: luban, partial,
-    onCfg: (id, cyc) => { luban[id] = cyc; state.luban = luban; save(); setFour(lastMm, partial); },
-    onApply: (d) => {
-      const el = $('calc-expr');
-      el.value = `${el.value.trim()} ${d > 0 ? '+' : '−'} ${Math.abs(d)}mm`;
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-    },
-  });
-}
+const luban = state.luban && typeof state.luban === 'object' ? state.luban : {}; // 魯班尺一循環的長度選擇（魯班尺分頁用）
+function setFour(mm, partial) { renderFour($('four-panel'), mm, { partial }); }
 
 function renderCalc() {
   const out = $('calc-out'), hint = $('calc-hint');
@@ -125,38 +114,78 @@ $('calc-save').addEventListener('click', () => {
   state.history = history; save(); renderHistory();
 });
 
-// 按鍵面板：pointerdown 時 preventDefault，輸入欄不會失去焦點，也不會跳出手機鍵盤
-function pressKey(key) {
-  const el = $('calc-expr');
-  const s0 = el.selectionStart ?? el.value.length;
-  const e0 = el.selectionEnd ?? s0;
-  const r = applyKey(el.value, s0, e0, key);
-  if (!r) return;
-  el.value = r.value;
-  el.setSelectionRange(r.caret, r.caret);
-  el.dispatchEvent(new Event('input', { bubbles: true }));
+// 按鍵面板（台尺混算與魯班尺共用）：pointerdown 時 preventDefault，輸入欄不會失去焦點，也不會跳出手機鍵盤
+const KEYPAD_HTML = `
+<button type="button" class="k u" data-k="丈">丈</button>
+<button type="button" class="k u" data-k="尺">尺</button>
+<button type="button" class="k u" data-k="寸">寸</button>
+<button type="button" class="k u" data-k="分">分</button>
+<button type="button" class="k u" data-k="間">間</button>
+<button type="button" class="k" data-k="7">7</button>
+<button type="button" class="k" data-k="8">8</button>
+<button type="button" class="k" data-k="9">9</button>
+<button type="button" class="k op" data-k="÷">÷</button>
+<button type="button" class="k fn" data-k="bs" aria-label="退格">⌫</button>
+<button type="button" class="k" data-k="4">4</button>
+<button type="button" class="k" data-k="5">5</button>
+<button type="button" class="k" data-k="6">6</button>
+<button type="button" class="k op" data-k="×">×</button>
+<button type="button" class="k fn" data-k="ac" aria-label="全部清除">清除</button>
+<button type="button" class="k" data-k="1">1</button>
+<button type="button" class="k" data-k="2">2</button>
+<button type="button" class="k" data-k="3">3</button>
+<button type="button" class="k op" data-k="−">−</button>
+<button type="button" class="k op" data-k="(">(</button>
+<button type="button" class="k" data-k="0">0</button>
+<button type="button" class="k" data-k=".">.</button>
+<button type="button" class="k u" data-k="mm">mm</button>
+<button type="button" class="k op" data-k="+">＋</button>
+<button type="button" class="k op" data-k=")">)</button>
+<button type="button" class="k u" data-k="厘">厘</button>
+<button type="button" class="k u" data-k="cm">cm</button>
+<button type="button" class="k u" data-k="m">m</button>
+<button type="button" class="k sq" data-k="×√2" aria-label="乘以根號二：裏目、對角線">×√2</button>
+<button type="button" class="k sq" data-k="÷√2" aria-label="除以根號二：角目">÷√2</button>
+`;
+function wireKeypad(host, input) {
+  host.innerHTML = KEYPAD_HTML;
+  const press = (key) => {
+    const s0 = input.selectionStart ?? input.value.length;
+    const e0 = input.selectionEnd ?? s0;
+    const r = applyKey(input.value, s0, e0, key);
+    if (!r) return;
+    input.value = r.value;
+    input.setSelectionRange(r.caret, r.caret);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+  host.addEventListener('pointerdown', (e) => {
+    const b = e.target.closest('button[data-k]');
+    if (!b) return;
+    e.preventDefault();
+    press(b.dataset.k);
+  });
+  host.addEventListener('click', (e) => { // 鍵盤（Enter／空白鍵）操作
+    const b = e.target.closest('button[data-k]');
+    if (b && e.detail === 0) press(b.dataset.k);
+  });
 }
-$('keypad').addEventListener('pointerdown', (e) => {
-  const b = e.target.closest('button[data-k]');
-  if (!b) return;
-  e.preventDefault();
-  pressKey(b.dataset.k);
-});
-$('keypad').addEventListener('click', (e) => { // 鍵盤（Enter／空白鍵）操作
-  const b = e.target.closest('button[data-k]');
-  if (b && e.detail === 0) pressKey(b.dataset.k);
-});
+wireKeypad($('keypad'), $('calc-expr'));
+wireKeypad($('lb-keypad'), $('lb-len'));
 
-// 預設不跳手機鍵盤（inputmode=none）；需要打 cm、m 等字時可切換
+// 預設不跳手機鍵盤（inputmode=none）；需要打其他字時可切換（兩個分頁共用這個選擇）
 function applySysKb() {
   const on = !!state.calcSysKb;
-  $('calc-expr').inputMode = on ? 'text' : 'none';
-  $('calc-kb').textContent = on ? '🔢 改回按鍵輸入' : '⌨ 改用手機鍵盤';
+  for (const [inp, btn] of [['calc-expr', 'calc-kb'], ['lb-len', 'lb-kb']]) {
+    $(inp).inputMode = on ? 'text' : 'none';
+    $(btn).textContent = on ? '🔢 改回按鍵輸入' : '⌨ 改用手機鍵盤';
+  }
 }
-$('calc-kb').addEventListener('click', () => {
-  state.calcSysKb = !state.calcSysKb; save(); applySysKb();
-  $('calc-expr').focus();
-});
+for (const [inp, btn] of [['calc-expr', 'calc-kb'], ['lb-len', 'lb-kb']]) {
+  $(btn).addEventListener('click', () => {
+    state.calcSysKb = !state.calcSysKb; save(); applySysKb();
+    $(inp).focus();
+  });
+}
 applySysKb();
 
 /* ---------- 2. 屋根・隅木・垂木 ---------- */
@@ -310,6 +339,32 @@ function renderDiag() {
   $('sq-fig').innerHTML = squareCheck(sq);
 }
 
+/* ---------- 5. 魯班尺 ---------- */
+let lbSpan = [20, 50, 100, 200].includes(state.lbSpan) ? state.lbSpan : 50;
+function renderLubanTab() {
+  const el = $('lb-len'), hint = $('lb-hint');
+  const r = softEval(el.value);
+  let mm = null, partial = false;
+  hint.textContent = '';
+  if (r.error) hint.textContent = r.error.message;
+  else if (r.incomplete) hint.textContent = r.pending ? '請點單位：丈、尺、寸、分、間、mm' : '請繼續輸入數字';
+  else if (!r.empty) {
+    mm = r.mm; partial = !!r.partial;
+    if (partial) hint.textContent = '還沒輸入完，先以前面已算好的部分判斷（暫時不能套用建議）';
+    else if (r.pending) hint.textContent = '沒點單位的數字會當作 mm';
+  }
+  renderLubanSummary($('lb-sum'), mm, luban, partial);
+  renderLuban($('lb-panel'), mm, {
+    cfg: luban, partial, span: lbSpan,
+    onCfg: (id, cyc) => { luban[id] = cyc; state.luban = luban; save(); renderLubanTab(); },
+    onSpan: (n) => { lbSpan = n; state.lbSpan = n; save(); renderLubanTab(); },
+    onApply: (d) => {
+      el.value = `${el.value.trim()} ${d > 0 ? '+' : '−'} ${Math.abs(d)}mm`;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    },
+  });
+}
+
 // 固定不變的圖：只畫一次
 $('tri-fig').innerHTML = tri345();
 $('mix-ladder').innerHTML = unitLadder();
@@ -317,7 +372,7 @@ $('arc-concept').innerHTML = arcConcept();
 
 /* ---------- 輸入欄位共通：還原 / 儲存 / 更新 ---------- */
 const renderers = {
-  'tab-mix': renderCalc, 'tab-roof': renderRoof, 'tab-arc': renderArc, 'tab-diag': renderDiag,
+  'tab-mix': renderCalc, 'tab-roof': renderRoof, 'tab-arc': renderArc, 'tab-diag': renderDiag, 'tab-luban': renderLubanTab,
 };
 document.querySelectorAll('main input, main select').forEach((el) => {
   if (el.classList.contains('nopersist')) return; // 搜尋框、新增詞條表單不存草稿
@@ -356,7 +411,7 @@ $('keys').addEventListener('pointerdown', (e) => {
    #/ 首頁　#/install 安裝教學
    #/calc[/mix|roof|arc|diag] 木作計算機（四個分頁；沒寫分頁就開上次用的）
    舊網址 #/roof #/arc #/diag 會自動導到 #/calc/… */
-const CALC_TABS = { mix: '台尺混算', roof: '屋頂坡度', arc: '弧線半徑', diag: '對角線' };
+const CALC_TABS = { mix: '台尺混算', roof: '屋頂坡度', arc: '弧線半徑', diag: '對角線', luban: '魯班尺' };
 const PAGES = ['home', 'install', 'calc', 'glossary'];
 const glossary = createGlossaryUI({ state, save });
 const LEGACY = ['roof', 'arc', 'diag'];
@@ -386,7 +441,7 @@ function route() {
   $('subtabs').hidden = !isCalc;
   $('topTitle').textContent = title;
   $('topJp').textContent = isCalc ? '電卓' : '';
-  const showKeys = isCalc && sub !== 'mix'; // 台尺混算用面板內的按鍵，其他分頁用底部快速鍵列
+  const showKeys = isCalc && sub !== 'mix' && sub !== 'luban'; // 台尺混算與魯班尺用面板內的按鍵，其他分頁用底部快速鍵列
   $('keys').hidden = !showKeys;
   document.body.classList.toggle('on-tool', showKeys);
   document.title = page === 'home' ? '日式大木作工具箱'

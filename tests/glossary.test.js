@@ -156,5 +156,8 @@ test('和小屋與洋小屋各自有說明，並有對照表', () => {
   assert.ok(COMPARE.rows.some((r) => r[0].includes('束') && r[2].includes('受拉')));
   // 洋小屋圖含四個桁架構件
   const names = yo.parts.map((p) => p.aria);
-  for (const n of ['陸梁', '合掌', '真束', '方杖']) assert.ok(names.includes(n), `洋小屋圖缺少 ${n}`);
+  for (const n of ['陸梁', '合掌', '真束', '方杖', '土台', '柱']) assert.ok(names.includes(n), `洋小屋圖缺少 ${n}`);
+  // 和小屋、洋小屋的下部一致（都有土台與柱），差別只在屋架
+  const waNames = wa.parts.map((p) => p.aria);
+  assert.ok(waNames.includes('土台') && waNames.includes('柱'));
 });

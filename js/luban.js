@@ -88,3 +88,36 @@ export function checkRuler(ruler, cycleMm, lengthMm, margin = DEFAULT_MARGIN_MM)
   }
   return out;
 }
+
+/**
+ * 在 lengthMm ± spanMm 的範圍內，列出所有吉位的穩妥區間，依「離目前長度要調多少」排序。
+ * 每筆：{ band, from, to, delta }
+ *   from～to：穩妥區間（兩端各縮進 margin，並裁切到搜尋範圍內）
+ *   delta：從目前長度調到這個區間最少要加減幾 mm（取整到 mm、並驗證會落在穩妥區；0 = 目前就在區間內）
+ */
+export function goodRangesNear(ruler, cycleMm, lengthMm, spanMm, margin = DEFAULT_MARGIN_MM) {
+  const n = ruler.bands.length;
+  const bw = cycleMm / n;
+  const lo0 = lengthMm - spanMm, hi0 = lengthMm + spanMm;
+  const kMin = Math.floor(lo0 / cycleMm) - 1, kMax = Math.ceil(hi0 / cycleMm) + 1;
+  const isGood = (x) => checkRuler(ruler, cycleMm, x, margin).status === 'good';
+  const out = [];
+  ruler.bands.forEach((band, i) => {
+    if (!ruler.good.includes(band)) return;
+    for (let k = kMin; k <= kMax; k++) {
+      const a = k * cycleMm + i * bw + margin, b = k * cycleMm + (i + 1) * bw - margin;
+      const from = Math.max(a, lo0), to = Math.min(b, hi0);
+      if (from > to) continue;
+      let delta = 0;
+      if (lengthMm < from) {                       // 要加長
+        delta = Math.max(1, Math.ceil(from - lengthMm - 1e-9));
+        for (let g = 0; g < 5 && !isGood(lengthMm + delta); g++) delta += 1;
+      } else if (lengthMm > to) {                  // 要縮短
+        delta = -Math.max(1, Math.ceil(lengthMm - to - 1e-9));
+        for (let g = 0; g < 5 && !isGood(lengthMm + delta); g++) delta -= 1;
+      }
+      out.push({ band, from, to, delta });
+    }
+  });
+  return out.sort((x, y) => Math.abs(x.delta) - Math.abs(y.delta) || x.from - y.from);
+}
