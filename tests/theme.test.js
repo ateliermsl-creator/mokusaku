@@ -5,6 +5,7 @@ import { inflateSync } from 'node:zlib';
 import { join } from 'node:path';
 
 const root = new URL('..', import.meta.url).pathname;
+const MASCOT_ORANGE = '#fdc672';     // 吉祥物圖示的底色（253,198,114）
 const read = (p) => readFileSync(join(root, p), 'utf8');
 const css = read('css/style.css');
 
@@ -109,9 +110,10 @@ test('舊的主題色不再殘留（木色、令和紫粉）', () => {
 test('瀏覽器與安裝後的主題色與標題列色一致', () => {
   const meta = /<meta name="theme-color" content="(#[0-9a-f]{6})"/i.exec(read('index.html'))[1].toLowerCase();
   const man = JSON.parse(read('manifest.webmanifest'));
-  assert.equal(meta, light.bar.toLowerCase());
-  assert.equal(man.theme_color.toLowerCase(), light.bar.toLowerCase());
-  assert.equal(man.background_color.toLowerCase(), light.bar.toLowerCase());
+  // 手機狀態列／安裝後的標題列／啟動畫面用吉祥物圖示的橘色底（與網站內部三色配色各自獨立）
+  assert.equal(meta, MASCOT_ORANGE);
+  assert.equal(man.theme_color.toLowerCase(), MASCOT_ORANGE);
+  assert.equal(man.background_color.toLowerCase(), MASCOT_ORANGE);
 });
 
 test('首頁不放配色說明卡片', () => {
