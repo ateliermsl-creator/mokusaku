@@ -345,3 +345,25 @@ input[type="search"] { -webkit-appearance: none; appearance: none; }
 .lb-sug { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
 .lb-sug .btnlink { justify-content: center; min-height: 42px; text-align: center; }
 .lb-use { margin: 0 0 4px; font-size: 12px; color: var(--muted); }
+
+/* 名詞對照：查詢方向 */
+.dir-hint { margin: -2px 0 8px; font-size: 13px; }
+.dim.ask { opacity: .85; }
+.dim.ask .dv b { font-size: 16px; color: var(--muted); font-weight: 600; }
+.dim.ans { margin: 4px -8px; padding: 8px; background: var(--surface-2); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 10px; }
+.dim.ans .dv b { font-size: 22px; color: var(--accent); }
+.dim .role { display: block; margin-top: 2px; font-style: normal; font-size: 11px; font-weight: 700; color: var(--accent); }
+.dim.ask .role { color: var(--muted); font-weight: 500; }
+
+/* 構架圖鑑：說明與對照表 */
+.expl { margin: 12px 0; padding: 10px 14px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.expl h3 { margin: 0 0 6px; font-size: 16px; color: var(--accent); }
+.expl ul { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.65; }
+.expl li { margin-bottom: 4px; }
+.cmp-wrap { overflow-x: auto; margin: 4px -4px 0; }
+.cmp { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.cmp th, .cmp td { padding: 7px 8px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+.cmp thead th { font-size: 13px; color: var(--muted); }
+.cmp tbody th { width: 5.5em; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.cmp .on { background: var(--surface-2); color: var(--ink); }
+.cmp thead .on { color: var(--accent); font-weight: 700; }

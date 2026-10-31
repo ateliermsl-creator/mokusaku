@@ -11,7 +11,7 @@ export function norm(s) {
 function prepared(t) {
   if (t._n) return t._n;
   t._n = {
-    ja: [norm(t.ja)],
+    ja: [norm(t.ja), ...(t.alias || []).map(norm)],
     kana: t.kana.split('／').map(norm),
     tw: t.tw.map(norm),
     slang: (t.slang || []).map(norm),
@@ -61,7 +61,7 @@ export function makeCustom({ ja, kana, tw, note }, now = Date.now()) {
   return {
     id: `u${now}${Math.random().toString(36).slice(2, 6)}`,
     cat: '我的詞條', ja: jaT, kana: String(kana ?? '').trim(), tw: twList,
-    conf: 'u', note: String(note ?? '').trim(), src: '', slang: [], warn: '', links: [],
+    conf: 'u', note: String(note ?? '').trim(), src: '', slang: [], alias: [], warn: '', links: [],
   };
 }
 

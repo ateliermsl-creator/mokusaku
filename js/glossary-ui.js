@@ -1,10 +1,21 @@
 // 台日大木作名詞＆構架對照庫：介面。所有文字一律用 textContent，避免自訂詞條帶入 HTML。
 import { TERMS, CATEGORIES, CONF } from './glossary.js';
 import { search, makeCustom } from './glossary-search.js';
-import { DIAGRAMS, renderDiagramSvg } from './diagrams.js';
+import { DIAGRAMS, COMPARE, renderDiagramSvg } from './diagrams.js';
 import { h } from './dom.js';
 
 const $ = (id) => document.getElementById(id);
+
+const DIR_HINT = {
+  all: '輸入日文、假名、中文或現場講法都可以，兩邊一起比對。',
+  ja: '你輸入的是日文或假名：只比對日文欄位，答案顯示台灣說法。例：垂木、たるき。',
+  tw: '你輸入的是中文或現場講法（含台語、日語外來語）：只比對台灣欄位，答案顯示日文。例：椽、角梁、Taruki。',
+};
+const DIR_PLACEHOLDER = {
+  all: '例：垂木、たるき、椽、角梁、ヌキ',
+  ja: '輸入日文或假名，例：垂木、たるき',
+  tw: '輸入中文或現場講法，例：椽、角梁、Taruki',
+};
 
 export function createGlossaryUI({ state, save }) {
   let dir = 'all', cat = '', tab = state.glossTab === 'frame' ? 'frame' : 'terms';
@@ -21,21 +32,33 @@ export function createGlossaryUI({ state, save }) {
   function dimRow(label, ...content) {
     return h('div', { class: 'dim' }, h('span', { class: 'dl', text: label }), h('div', { class: 'dv' }, content));
   }
+  const markRole = (row, role) => {
+    row.classList.add(role);
+    row.querySelector('.dl').append(h('em', { class: 'role', text: role === 'ask' ? '你查的' : '答案' }));
+  };
 
-  function termCard(t) {
-    const card = h('article', { class: 'term' });
+  function termCard(t, mode = 'all') {
+    const card = h('article', { class: `term mode-${mode}` });
     card.append(h('div', { class: 'term-top' },
       h('span', { class: `conf conf-${t.conf}`, text: CONF[t.conf] }),
       t.cat && t.conf !== 'u' ? h('span', { class: 'cat', text: t.cat }) : null));
 
-    card.append(dimRow('日本',
+    const jaRow = dimRow('日本',
       t.ja === '—' ? h('b', { class: 'none', text: '（無直接對應）' }) : h('b', { text: t.ja }),
-      t.kana ? h('small', { text: t.kana }) : null));
-    card.append(dimRow('台灣傳統', h('b', { text: t.tw[0] }),
-      t.tw.length > 1 ? h('small', { text: t.tw.slice(1).join('、') }) : null));
-    if (t.slang && t.slang.length) {
-      card.append(dimRow('現場行話', t.slang.map((s) => h('div', { class: 'sl', text: s }))));
-    }
+      t.kana ? h('small', { text: t.kana }) : null,
+      t.alias && t.alias.length ? h('small', { text: `別稱：${t.alias.join('、')}` }) : null);
+    const twRow = dimRow('台灣傳統', h('b', { text: t.tw[0] }),
+      t.tw.length > 1 ? h('small', { text: t.tw.slice(1).join('、') }) : null);
+    const slangRow = t.slang && t.slang.length
+      ? dimRow('現場行話', t.slang.map((x) => h('div', { class: 'sl', text: x }))) : null;
+
+    // 查詢方向會改變排列：你輸入的那一邊排前面（淡），答案那一邊放大、反白
+    // 注意：沒有現場行話時 slangRow 是 null，append(null) 會變成文字 "null"，所以一律先濾掉
+    let rows;
+    if (mode === 'ja') { markRole(jaRow, 'ask'); markRole(twRow, 'ans'); rows = [jaRow, twRow, slangRow]; }
+    else if (mode === 'tw') { markRole(twRow, 'ask'); markRole(jaRow, 'ans'); rows = [twRow, slangRow, jaRow]; }
+    else rows = [jaRow, twRow, slangRow];
+    card.append(...rows.filter(Boolean));
     if (t.note) card.append(dimRow('機能與差異', h('div', { class: 'nt', text: t.note })));
     if (t.warn) card.append(h('div', { class: 'warn', role: 'note', text: t.warn }));
 
@@ -67,7 +90,9 @@ export function createGlossaryUI({ state, save }) {
   }
 
   function renderChips() {
-    chips($('gl-dir'), [['all', '全部'], ['ja', '日 → 台'], ['tw', '台 → 日']], dir, (v) => { dir = v; renderChips(); renderList(); });
+    chips($('gl-dir'), [['all', '全部'], ['ja', '日文 → 台灣'], ['tw', '台灣 → 日文']], dir, (v) => { dir = v; renderChips(); renderList(); });
+    $('gl-dir-hint').textContent = DIR_HINT[dir];
+    $('gl-q').placeholder = DIR_PLACEHOLDER[dir];
     const cats = [['', '全部分類'], ...CATEGORIES.map((c) => [c, c])];
     if (custom.length) cats.push(['我的詞條', `我的詞條（${custom.length}）`]);
     chips($('gl-cat'), cats, cat, (v) => { cat = v; renderChips(); renderList(); });
@@ -85,7 +110,7 @@ export function createGlossaryUI({ state, save }) {
       return;
     }
     const MAX = 40;
-    for (const t of list.slice(0, MAX)) box.append(termCard(t));
+    for (const t of list.slice(0, MAX)) box.append(termCard(t, dir));
     if (list.length > MAX) box.append(h('p', { class: 'note', text: `只顯示前 ${MAX} 條，請輸入更多字或選分類縮小範圍。` }));
   }
 
@@ -112,7 +137,23 @@ export function createGlossaryUI({ state, save }) {
     fig.setAttribute('aria-label', d.title);
     fig.innerHTML = renderDiagramSvg(d); // 靜態、可信的圖形字串
     $('gl-pick').textContent = '';
+    renderExplain(d);
     if (selectedPart) pickPart(selectedPart);
+  }
+
+  function renderExplain(d) {
+    const box = $('gl-explain');
+    box.textContent = '';
+    box.append(h('div', { class: 'expl' }, h('h3', { text: d.explain.heading }), h('ul', {}, d.explain.points.map((x) => h('li', { text: x })))));
+    if (d.id === 'wa' || d.id === 'yo') {
+      const col = d.id === 'wa' ? 1 : 2;
+      const cell = (txt, i, tag = 'td') => h(tag, { class: i === col ? 'on' : null, text: txt });
+      box.append(h('div', { class: 'expl' },
+        h('h3', { text: '和小屋 vs 洋小屋：差在哪裡？' }),
+        h('div', { class: 'cmp-wrap' }, h('table', { class: 'cmp' },
+          h('thead', {}, h('tr', {}, COMPARE.heads.map((x, i) => cell(x, i, 'th')))),
+          h('tbody', {}, COMPARE.rows.map((r) => h('tr', {}, r.map((x, i) => cell(x, i, i === 0 ? 'th' : 'td')))))))));
+    }
   }
 
   function pickPart(id) {

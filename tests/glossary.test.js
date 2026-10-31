@@ -11,7 +11,7 @@ test('詞庫資料完整性', () => {
     assert.ok(t.ja.trim(), 'ja 空白');
     if (t.ja === '—') assert.equal(t.kana, '', '「無直接對應」不應有假名');
     else assert.match(t.kana, /^[ぁ-ゖー・／]+$/, `${t.ja}: 假名要用平假名 → ${t.kana}`);
-    assert.ok(Array.isArray(t.slang) && Array.isArray(t.links), `${t.ja}: slang/links`);
+    assert.ok(Array.isArray(t.slang) && Array.isArray(t.links) && Array.isArray(t.alias), `${t.ja}: slang/links/alias`);
     for (const l of t.links) assert.ok(l.label && (l.disabled || /^#\//.test(l.href)), `${t.ja}: link`);
     assert.ok(Array.isArray(t.tw) && t.tw.length > 0 && t.tw.every((x) => x.trim()), `${t.ja}: tw`);
     assert.ok(['v', 'c', 'q'].includes(t.conf) && t.conf in CONF, `${t.ja}: conf`);
@@ -112,10 +112,11 @@ test('自訂詞條', () => {
   assert.ok(search(all, { q: '暗椽', dir: 'tw' }).length === 1);
 });
 
-import { DIAGRAMS, renderDiagramSvg } from '../js/diagrams.js';
+import { DIAGRAMS, COMPARE, renderDiagramSvg } from '../js/diagrams.js';
 
 test('構架圖：每個構件都對得到詞庫詞條', () => {
-  assert.equal(DIAGRAMS.length, 2);
+  assert.deepEqual(DIAGRAMS.map((d) => d.id), ['wa', 'yo', 'tw']);
+  for (const d of DIAGRAMS) assert.ok(d.explain && d.explain.heading && d.explain.points.length >= 4, `${d.id}: 缺少說明`);
   for (const d of DIAGRAMS) {
     const ids = new Set();
     for (const p of d.parts) {
@@ -128,4 +129,32 @@ test('構架圖：每個構件都對得到詞庫詞條', () => {
     for (const p of d.parts) assert.ok(svg.includes(`data-id="${p.id}"`));
     assert.ok(d.parts.length >= 9);
   }
+});
+
+test('洋小屋：詞條、構件、日文別名、同名不同力警示', () => {
+  const get = (ja) => TERMS.find((t) => t.ja === ja);
+  for (const ja of ['洋小屋', '陸梁', '合掌', '真束', '方杖', '和小屋']) assert.ok(get(ja), `缺少 ${ja}`);
+  assert.equal(search(TERMS, { q: 'ようごや' })[0].ja, '洋小屋');
+  assert.equal(search(TERMS, { q: 'ろくばり' })[0].ja, '陸梁');
+  assert.equal(search(TERMS, { q: 'がっしょう' })[0].ja, '合掌');
+  assert.equal(search(TERMS, { q: 'トラス', dir: 'ja' })[0].ja, '洋小屋');      // 日文別名
+  assert.equal(search(TERMS, { q: 'キングポスト' })[0].ja, '洋小屋');
+  assert.ok(search(TERMS, { q: '桁架', dir: 'tw' }).some((t) => t.ja === '洋小屋'));
+  assert.ok(search(TERMS, { q: '上弦桿', dir: 'tw' }).some((t) => t.ja === '合掌'));
+  assert.ok(get('真束').warn.includes('受拉') && get('真束').warn.includes('受壓'));
+  assert.ok(get('和小屋').warn.includes('受彎') && get('洋小屋').warn.includes('三角形桁架'));
+  assert.equal(get('洋小屋').cat, '屋架・屋頂');
+});
+
+test('和小屋與洋小屋各自有說明，並有對照表', () => {
+  const wa = DIAGRAMS.find((d) => d.id === 'wa'), yo = DIAGRAMS.find((d) => d.id === 'yo');
+  assert.ok(wa.explain.heading.includes('和小屋') && yo.explain.heading.includes('洋小屋'));
+  assert.ok(wa.explain.points.some((p) => p.includes('小屋束')) && !wa.explain.points.some((p) => p.includes('陸梁')));
+  assert.ok(yo.explain.points.some((p) => p.includes('陸梁') && p.includes('合掌')) && yo.explain.points.some((p) => p.includes('真束')));
+  assert.equal(COMPARE.heads.length, 3);
+  for (const row of COMPARE.rows) assert.equal(row.length, 3);
+  assert.ok(COMPARE.rows.some((r) => r[0].includes('束') && r[2].includes('受拉')));
+  // 洋小屋圖含四個桁架構件
+  const names = yo.parts.map((p) => p.aria);
+  for (const n of ['陸梁', '合掌', '真束', '方杖']) assert.ok(names.includes(n), `洋小屋圖缺少 ${n}`);
 });
