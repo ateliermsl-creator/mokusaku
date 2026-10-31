@@ -42,3 +42,73 @@ export function polyArea(pts) {
   }
   return Math.abs(s) / 2;
 }
+
+/* ───────────────────────── 通用立體模型 ─────────────────────────
+ * jointModel(id, D) → {
+ *   members: [{ name, color: 'a'|'b', pieces: [{ poly: [[x, y], …], y0, y1 }] }],   // 每片 ＝ 平面形狀沿高度 y0→y1 拉伸
+ *   pins: [{ x, size }] | [],  cx（置中用的 x）、explodeDx（拆開時每根材移動量）、D
+ * }
+ * 兩根材在「每一層高度」都剛好拼滿整個平面（由 tests/joint3d.test.js 以取樣點檢查）。
+ */
+function rectPoly(x0, x1, H) { return [[x0, -H], [x1, -H], [x1, H], [x0, H]]; }
+
+/** 追掛大栓継ぎ：A、B 整段貫穿高度 */
+function oikakeGeneric(D) {
+  const m = oikakeModel(D);
+  return {
+    // 拆開：兩材要沿長度方向各退開 0.62 Lx（相對距離 1.24 Lx ＞ 搭接長度 Lx），榫頭才不會還互相穿插
+    D, cx: m.Lx / 2, explodeDx: m.Lx * 0.62, pinDz: D * 1.35, pins: m.pins,
+    x0: -m.ext, x1: m.Lx + m.ext,
+    // 栓孔位置框線：材面朝 +Z 的是 B（平面 y<0 側），朝 −Z 的是 A；框線要跟著各自的材一起移動
+    holes: m.pins.flatMap((p) => [{ member: 'B', x: p.x, size: p.size, zFace: 1 }, { member: 'A', x: p.x, size: p.size, zFace: -1 }]),
+    members: [
+      { name: 'A', color: 'a', pieces: [{ poly: m.A, y0: 0, y1: D }] },
+      { name: 'B', color: 'b', pieces: [{ poly: m.B, y0: 0, y1: D }] },
+    ],
+  };
+}
+
+/**
+ * 鎌継ぎ／腰掛蟻継ぎ 共同結構（依文獻圖 17(b)(c) 的平面與側面圖推定）：
+ *  - 公材（左）的榫頭只在上半深（D/2），從肩 xB 伸出；母材（右）上半有對應的凹槽。
+ *  - 下半：母材比公材的肩多伸出 e（xA→xB）當「腰掛」承台，托住榫頭。
+ *  - 榫頭平面形狀：頸寬 1/4 D；頭端加寬到 3/8 D。
+ * 側面圖的 1/10 勾配（榫頭端面斜度）沒有建進模型。
+ */
+function halfTongue(D, { neckLen, headLen, wNeck, wHead, ext = 1 }) {
+  const e = E * D, H = D / 2, X = ext * D;
+  const xA = 0, xB = e, xT = xB + neckLen + headLen, xEnd = xT + X;
+  const n = wNeck / 2, w = wHead / 2;
+  const tongue = neckLen > 0
+    ? [[xB, -n], [xB + neckLen, -n], [xT, -w], [xT, w], [xB + neckLen, n], [xB, n]]
+    : [[xB, -n], [xT, -w], [xT, w], [xB, n]];
+  // 公材上半：左段方材 ＋ 榫頭（以順時針頂點表示輪廓）
+  const upperMale = [[-X, -H], [xB, -H], ...tongue, [xB, H], [-X, H]];
+  // 母材上半：右段方材，左端挖掉榫頭形狀
+  const upperFemale = [[xB, -H], [xEnd, -H], [xEnd, H], [xB, H], ...[...tongue].reverse()];
+  return {
+    D, cx: (xT + xB) / 2, explodeDx: (xT - xB) * 0.65 + e, pinDz: 0, pins: [], holes: [], x0: -X, x1: xEnd, e, xA, xB, xT,
+    members: [
+      { name: '公材', color: 'a', pieces: [{ poly: upperMale, y0: H, y1: D }, { poly: rectPoly(-X, xA, H), y0: 0, y1: H }] },
+      { name: '母材', color: 'b', pieces: [{ poly: upperFemale, y0: H, y1: D }, { poly: rectPoly(xA, xEnd, H), y0: 0, y1: H }] },
+    ],
+  };
+}
+
+export function jointModel(id, D) {
+  if (!(D > 0) || !Number.isFinite(D)) throw new Error('材成要大於 0');
+  if (id === 'oikake') return oikakeGeneric(D);
+  if (id === 'kama') return halfTongue(D, { neckLen: 0.625 * D, headLen: 0.625 * D, wNeck: 0.25 * D, wHead: 0.375 * D });
+  if (id === 'koshikake') return halfTongue(D, { neckLen: 0, headLen: 0.5 * D, wNeck: 0.25 * D, wHead: 0.375 * D });
+  throw new Error(`沒有這個継手：${id}`);
+}
+
+/** 點是否在多邊形內（射線法），測試用 */
+export function inPoly(pt, poly) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i], [xj, yj] = poly[j];
+    if ((yi > pt[1]) !== (yj > pt[1]) && pt[0] < ((xj - xi) * (pt[1] - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
