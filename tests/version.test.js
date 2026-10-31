@@ -59,9 +59,8 @@ test('js/、lib/ 底下的每個檔案都在 ASSETS 裡（動態 import 的檔�
   }
 });
 
-test('頁尾有版權聲明：屏東文資傳匠工坊、標誌、第三方與文獻引用', () => {
+test('不放版權聲明頁尾', () => {
   const html = read('index.html');
-  assert.ok(html.includes('© 2026 屏東文資傳匠工坊') && html.includes('版權所有'));
-  assert.ok(html.includes('icons/logo-wenzi.png') && existsSync(join(root, 'icons/logo-wenzi.png')));
-  assert.ok(html.includes('three.js') && html.includes('古蹟木作修復技術'));
+  assert.ok(!html.includes('id="copyright"') && !html.includes('版權所有') && !html.includes('logo-wenzi'));
+  assert.ok(!existsSync(join(root, 'icons/logo-wenzi.png')));
 });
