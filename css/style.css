@@ -450,3 +450,16 @@ a.chip { display: inline-flex; align-items: center; text-decoration: none; }
 .jt3d-bar .sec[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .jt3d-cut { display: flex; align-items: center; gap: 8px; flex: 1 1 140px; font-size: 14px; }
 .jt3d-cut input { flex: 1; min-width: 80px; }
+
+/* 版權聲明 */
+#copyright { margin: 28px 16px 8px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12.5px; line-height: 1.6; }
+.cp-row { display: flex; align-items: center; gap: 12px; }
+.cp-logo { flex: 0 0 auto; width: 64px; height: auto; padding: 5px; background: #fff; border: 1px solid var(--line); border-radius: 12px; }
+.cp-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cp-text b { color: var(--ink); font-size: 13.5px; }
+.cp-more { margin-top: 10px; }
+.cp-more summary { cursor: pointer; color: var(--accent-2); font-weight: 600; }
+.cp-more ul { margin: 8px 0 0; padding-left: 18px; }
+.cp-more li { margin-bottom: 6px; }
+@media (prefers-color-scheme: dark) { .cp-more summary { color: var(--muted); text-decoration: underline; } }
+body.sheet-open #copyright { display: none; }
