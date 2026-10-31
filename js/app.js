@@ -1,5 +1,6 @@
 import { evalLength, toKenShaku, toTaiShaku, fmtMm, toShaku } from './units.js';
 import { createGlossaryUI } from './glossary-ui.js';
+import { applyKey, softEval } from './keypad.js';
 import {
   roofFromKobai, roofLengths, haitsukeRafters, kobaiFromAngle, kobaiFromRiseRun,
   arcFromChordRise, arcFromChordRadius, arcOffsets, diagonal,
@@ -7,7 +8,7 @@ import {
 
 const $ = (id) => document.getElementById(id);
 const STORE = 'mokusaku.v1';
-const VERSION = '6'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
+const VERSION = '7'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
 
 /* ---------- 儲存（localStorage 可能被擋，全部包 try） ---------- */
 let state = {};
@@ -42,21 +43,36 @@ function readLen(id, errId) {
 let history = Array.isArray(state.history) ? state.history : [];
 
 function renderCalc() {
-  const out = $('calc-out');
-  try {
-    const mm = evalLength($('calc-expr').value);
-    if (mm === null) { out.innerHTML = ''; return null; }
-    out.innerHTML = `
-      <div class="mm">${fmtMm(mm)}<small>mm</small></div>
-      <div class="shaku">${toTaiShaku(mm)}</div>
-      <div class="shaku2">${toShaku(mm)} 尺　／　${n(mm / 1000, 4)} m</div>
-      <div class="shaku2 jp">日式 ${toKenShaku(mm)}</div>`;
-    return mm;
-  } catch (e) {
-    out.innerHTML = `<div class="err" style="display:block;margin:0"></div>`;
-    out.firstElementChild.textContent = e.message;
+  const out = $('calc-out'), hint = $('calc-hint');
+  const r = softEval($('calc-expr').value);
+  out.classList.remove('partial');
+  hint.textContent = '';
+  if (r.empty) { out.innerHTML = ''; return null; }
+  if (r.error) {
+    out.innerHTML = '<div class="err" style="display:block;margin:0"></div>';
+    out.firstElementChild.textContent = r.error.message;
     return null;
   }
+  if (r.incomplete) {
+    out.innerHTML = '';
+    hint.textContent = r.pending ? '請點單位：丈、尺、寸、分、間、mm' : '請繼續輸入數字';
+    return null;
+  }
+  const mm = r.mm;
+  out.innerHTML = `
+    <div class="mm">${fmtMm(mm)}<small>mm</small></div>
+    <div class="shaku">${toTaiShaku(mm)}</div>
+    <div class="shaku2">${toShaku(mm)} 尺　／　${n(mm / 1000, 4)} m</div>
+    <div class="shaku2 jp">日式 ${toKenShaku(mm)}</div>`;
+  if (r.partial) {
+    out.classList.add('partial');
+    hint.textContent = r.pending ? '最後的數字還沒選單位，請點 丈／尺／寸／分…（目前顯示的是前面已算好的部分）'
+      : r.dangling ? '請繼續輸入數字（目前顯示的是前面已算好的部分）'
+        : '括號還沒補完（目前以補上右括號計算）';
+    return null; // 還沒輸入完的結果不可記錄
+  }
+  if (r.pending) hint.textContent = '沒點單位的數字會當作 mm';
+  return mm;
 }
 function renderHistory() {
   const ul = $('history');
@@ -84,11 +100,40 @@ $('calc-save').addEventListener('click', () => {
   history = [{ expr, mm }, ...history.filter((h) => h.expr !== expr)].slice(0, 30);
   state.history = history; save(); renderHistory();
 });
-$('calc-clear').addEventListener('click', () => {
-  $('calc-expr').value = '';
-  $('calc-expr').dispatchEvent(new Event('input', { bubbles: true }));
+
+// 按鍵面板：pointerdown 時 preventDefault，輸入欄不會失去焦點，也不會跳出手機鍵盤
+function pressKey(key) {
+  const el = $('calc-expr');
+  const s0 = el.selectionStart ?? el.value.length;
+  const e0 = el.selectionEnd ?? s0;
+  const r = applyKey(el.value, s0, e0, key);
+  if (!r) return;
+  el.value = r.value;
+  el.setSelectionRange(r.caret, r.caret);
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+}
+$('keypad').addEventListener('pointerdown', (e) => {
+  const b = e.target.closest('button[data-k]');
+  if (!b) return;
+  e.preventDefault();
+  pressKey(b.dataset.k);
+});
+$('keypad').addEventListener('click', (e) => { // 鍵盤（Enter／空白鍵）操作
+  const b = e.target.closest('button[data-k]');
+  if (b && e.detail === 0) pressKey(b.dataset.k);
+});
+
+// 預設不跳手機鍵盤（inputmode=none）；需要打 cm、m 等字時可切換
+function applySysKb() {
+  const on = !!state.calcSysKb;
+  $('calc-expr').inputMode = on ? 'text' : 'none';
+  $('calc-kb').textContent = on ? '🔢 改回按鍵輸入' : '⌨ 改用手機鍵盤';
+}
+$('calc-kb').addEventListener('click', () => {
+  state.calcSysKb = !state.calcSysKb; save(); applySysKb();
   $('calc-expr').focus();
 });
+applySysKb();
 
 /* ---------- 2. 屋根・隅木・垂木 ---------- */
 function roofKobai() {
@@ -320,8 +365,9 @@ function route() {
   $('subtabs').hidden = !isCalc;
   $('topTitle').textContent = title;
   $('topJp').textContent = isCalc ? '電卓' : '';
-  $('keys').hidden = !isCalc;
-  document.body.classList.toggle('on-tool', isCalc);
+  const showKeys = isCalc && sub !== 'mix'; // 台尺混算用面板內的按鍵，其他分頁用底部快速鍵列
+  $('keys').hidden = !showKeys;
+  document.body.classList.toggle('on-tool', showKeys);
   document.title = page === 'home' ? '日式大木作工具箱'
     : `${isCalc ? CALC_TABS[sub] : title}｜日式大木作工具箱`;
 

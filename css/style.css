@@ -274,3 +274,19 @@ input[type="search"] { -webkit-appearance: none; appearance: none; }
 /* 更新提示列 */
 #updBar { position: fixed; left: 12px; right: 12px; top: calc(env(safe-area-inset-top) + 8px); z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; font-size: 14px; color: #fff; background: #2a2118; border: 1px solid #e0a45e; border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, .35); }
 #updBar button { flex: none; min-height: 36px; padding: 0 14px; font: inherit; font-weight: 600; color: #2a2118; background: #e0a45e; border: 0; border-radius: 9px; }
+
+/* ---------- 台尺混算：按鍵面板 ---------- */
+#calc-expr { font-size: 20px; letter-spacing: .02em; }
+.hint-line { min-height: 1.5em; margin: -2px 0 8px; font-size: 13px; color: var(--muted); }
+.result.partial { opacity: .6; }
+.keypad { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 10px 0 12px; }
+.keypad .k {
+  min-height: 56px; padding: 0; font: inherit; font-size: 22px; font-weight: 600; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  touch-action: manipulation; -webkit-user-select: none; user-select: none;
+}
+.keypad .k:active { transform: scale(.96); background: var(--surface-2); }
+.keypad .k.u { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); }
+.keypad .k.u:active { filter: brightness(.9); }
+.keypad .k.op { background: var(--surface-2); color: var(--accent); }
+.keypad .k.fn { font-size: 17px; color: var(--muted); background: var(--surface-2); }

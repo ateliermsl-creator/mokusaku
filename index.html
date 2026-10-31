@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hant-TW" data-v="6">
+<html lang="zh-Hant-TW" data-v="7">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -128,21 +128,51 @@
     <!-- 台尺混算 -->
     <section id="tab-mix" class="panel" hidden>
       <label class="field">
-        <span>算式</span>
-        <input id="calc-expr" class="len" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false"
-               placeholder="例：2丈5寸 + 120mm − 15.5mm">
+        <span>算式（用下方按鍵輸入）</span>
+        <input id="calc-expr" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false"
+               placeholder="點數字，再點單位，例如：2 丈 5 寸">
       </label>
       <div id="calc-out" class="result" aria-live="polite"></div>
+      <p id="calc-hint" class="hint-line" aria-live="polite"></p>
+
+      <div class="keypad" id="keypad" role="group" aria-label="輸入按鍵">
+        <button type="button" class="k u" data-k="丈">丈</button>
+        <button type="button" class="k u" data-k="尺">尺</button>
+        <button type="button" class="k u" data-k="寸">寸</button>
+        <button type="button" class="k u" data-k="分">分</button>
+        <button type="button" class="k u" data-k="間">間</button>
+        <button type="button" class="k" data-k="7">7</button>
+        <button type="button" class="k" data-k="8">8</button>
+        <button type="button" class="k" data-k="9">9</button>
+        <button type="button" class="k op" data-k="÷">÷</button>
+        <button type="button" class="k fn" data-k="bs" aria-label="退格">⌫</button>
+        <button type="button" class="k" data-k="4">4</button>
+        <button type="button" class="k" data-k="5">5</button>
+        <button type="button" class="k" data-k="6">6</button>
+        <button type="button" class="k op" data-k="×">×</button>
+        <button type="button" class="k fn" data-k="ac" aria-label="全部清除">清除</button>
+        <button type="button" class="k" data-k="1">1</button>
+        <button type="button" class="k" data-k="2">2</button>
+        <button type="button" class="k" data-k="3">3</button>
+        <button type="button" class="k op" data-k="−">−</button>
+        <button type="button" class="k op" data-k="(">(</button>
+        <button type="button" class="k" data-k="0">0</button>
+        <button type="button" class="k" data-k=".">.</button>
+        <button type="button" class="k u" data-k="mm">mm</button>
+        <button type="button" class="k op" data-k="+">＋</button>
+        <button type="button" class="k op" data-k=")">)</button>
+      </div>
+
       <div class="row">
         <button id="calc-save" type="button" class="btn primary">記錄</button>
-        <button id="calc-clear" type="button" class="btn">清除</button>
+        <button id="calc-kb" type="button" class="btn">⌨ 改用手機鍵盤</button>
       </div>
       <h2>歷史紀錄 <i class="jp">履歴</i></h2>
       <ul id="history" class="history"></ul>
       <p class="note">
-        單位：丈（10尺）・尺・寸・分・厘・mm・cm・m，也可輸入日式的「間」（6尺）。<br>
-        1 台尺 = 10/33 公尺 ≈ 303.03 mm，與日本的 1 尺相同。沒寫單位的數字當作 mm。<br>
-        連寫會自動相加，例如「1丈2尺3寸」。下方按鍵列可直接插入單位與符號。
+        先點數字，再點單位（丈・尺・寸・分・間・mm），連著點會自動相加，例如「2 丈 5 寸」；沒點單位的數字會當作 mm。<br>
+        1 丈 = 10 尺，1 間 = 6 尺（日式）。1 台尺 = 10/33 公尺 ≈ 303.03 mm，與日本的 1 尺相同。<br>
+        點算式中間的位置，可以在那裡插入或修改。要輸入 cm、m 或其他字，請按「改用手機鍵盤」。
       </p>
     </section>
 
