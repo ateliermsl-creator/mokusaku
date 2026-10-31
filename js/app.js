@@ -4,6 +4,7 @@ import { applyKey, softEval } from './keypad.js';
 import { renderFour } from './four.js';
 import { renderLuban, renderLubanSummary } from './luban-ui.js';
 import { renderJointPage } from './joint-ui.js';
+import { renderInstall, showInAppBanner, inAppName, isStandalone } from './install-ui.js';
 import {
   roofSection, hipSection, haitsukePlan, arcFigure, arcConcept, diagFigure, squareCheck, tri345,
   unitLadder, composition,
@@ -15,7 +16,7 @@ import {
 
 const $ = (id) => document.getElementById(id);
 const STORE = 'mokusaku.v1';
-const VERSION = '18'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
+const VERSION = '19'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
 
 /* ---------- 儲存（localStorage 可能被擋，全部包 try） ---------- */
 let state = {};
@@ -509,21 +510,19 @@ function route() {
   closeSheet();
   if (isCalc) renderers[`tab-${sub}`]();
   if (page === 'home') renderHome();
-  if (page === 'install') $('inAppWarn').hidden = !inApp();
+  if (page === 'install') renderInstall();
+  showInAppBanner();
   if (page === 'glossary') glossary.render();
   if (page === 'joint') renderers['page-joint']();
   window.scrollTo(0, 0);
 }
 
-const isStandalone = () =>
-  matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-const inApp = () => /Line\/|FBAN|FBAV|Instagram|MicroMessenger/i.test(navigator.userAgent);
 
 function renderHome() {
   // 加到桌面提醒
   let hidden = false;
   try { hidden = !!localStorage.getItem('installHint'); } catch { /* ignore */ }
-  $('instHint').hidden = isStandalone() || hidden;
+  $('instHint').hidden = isStandalone() || !!inAppName() || hidden;
 }
 $('instHide').addEventListener('click', () => {
   try { localStorage.setItem('installHint', '1'); } catch { /* ignore */ }
