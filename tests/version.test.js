@@ -41,3 +41,11 @@ test('index.html 引用的本地檔案都在 ASSETS 裡', () => {
   const html = read('index.html');
   for (const m of html.matchAll(/(?:href|src)="([^"#:]+\.[a-z0-9]+)"/gi)) assert.ok(assets.has(m[1]), `${m[1]} 不在 ASSETS 裡`);
 });
+
+test('首頁不放「最新更新」：沒有面板、沒有更新紀錄檔、不在離線清單', () => {
+  const html = read('index.html');
+  assert.ok(!html.includes('最新更新') && !html.includes('id="updates"'));
+  assert.ok(!existsSync(join(root, 'updates.json')), 'updates.json 應已移除');
+  assert.ok(!read('sw.js').includes('updates.json'));
+  assert.ok(!/updates\.json|updBody|updDate/.test(read('js/app.js')));
+});

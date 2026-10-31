@@ -14,7 +14,7 @@ import {
 
 const $ = (id) => document.getElementById(id);
 const STORE = 'mokusaku.v1';
-const VERSION = '15'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
+const VERSION = '16'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
 
 /* ---------- 儲存（localStorage 可能被擋，全部包 try） ---------- */
 let state = {};
@@ -513,35 +513,11 @@ const isStandalone = () =>
   matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const inApp = () => /Line\/|FBAN|FBAV|Instagram|MicroMessenger/i.test(navigator.userAgent);
 
-let updatesLoaded = false;
-async function renderHome() {
+function renderHome() {
   // 加到桌面提醒
   let hidden = false;
   try { hidden = !!localStorage.getItem('installHint'); } catch { /* ignore */ }
   $('instHint').hidden = isStandalone() || hidden;
-
-  if (updatesLoaded) return;
-  updatesLoaded = true;
-  try {
-    const list = await (await fetch('updates.json')).json();
-    if (!Array.isArray(list) || !list.length) return;
-    $('updDate').textContent = list[0].date;
-    const body = $('updBody');
-    body.textContent = '';
-    for (const u of list) {
-      const d = document.createElement('div');
-      d.className = 'd';
-      d.textContent = u.date;
-      const ul = document.createElement('ul');
-      for (const it of u.items) {
-        const li = document.createElement('li');
-        li.textContent = it;
-        ul.append(li);
-      }
-      body.append(d, ul);
-    }
-    $('updates').hidden = false;
-  } catch { updatesLoaded = false; /* 離線且沒快取時就不顯示 */ }
 }
 $('instHide').addEventListener('click', () => {
   try { localStorage.setItem('installHint', '1'); } catch { /* ignore */ }
