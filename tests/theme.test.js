@@ -28,13 +28,13 @@ const contrast = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - 
 
 // 文字色 on 底色：一般文字至少 4.5
 const PAIRS = [
-  ['ink', 'bg'], ['ink', 'surface'], ['ink', 'surface-2'],
+  ['ink', 'bg'], ['ink', 'surface'], ['ink', 'surface-2'], ['ink', 'hero'],
   ['muted', 'bg'], ['muted', 'surface'], ['muted', 'surface-2'], ['muted', 'hero'],
   ['accent', 'bg'], ['accent', 'surface'], ['accent', 'surface-2'], ['accent', 'hero'],
   ['accent-ink', 'accent'],
+  ['accent-2', 'bg'], ['accent-2', 'surface'], ['accent-2', 'surface-2'], ['accent-2', 'hero'],
   ['bar-ink', 'bar'],
-  ['ume', 'bg'], ['ume', 'surface'],
-  ['bar', 'ume-soft'],            // 選取中的分頁：深色字 on 梅色底
+  ['on-highlight', 'highlight'],     // 選取中的分頁
 ];
 
 for (const [name, P] of [['淺色', light], ['深色', dark]]) {
@@ -45,25 +45,65 @@ for (const [name, P] of [['淺色', light], ['深色', dark]]) {
       assert.ok(c >= 4.5, `${name} ${fg}(${P[fg]}) on ${bg}(${P[bg]}) = ${c.toFixed(2)} < 4.5`);
     }
   });
+  test(`${name}：圖形色塊（組成條、圖示線條）對底色 ≥ 3`, () => {
+    for (const k of ['s0', 's1', 's2', 's3', 'fig-line']) {
+      const c = contrast(P[k], P.surface);
+      assert.ok(c >= 3, `${name} ${k}(${P[k]}) on surface(${P.surface}) = ${c.toFixed(2)} < 3`);
+    }
+  });
 }
 
-test('三個令和色名都有對應的色票：櫻、堇（主色）、梅', () => {
-  for (const k of ['sakura', 'accent', 'ume', 'ume-soft', 'hero', 'bar']) assert.ok(light[k], `缺少 ${k}`);
-  // 主色是紫（藍分量 > 紅分量 > 綠分量），梅是偏紅的粉，櫻是淡粉
-  const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
-  const [ar, ag, ab] = rgb(light.accent); assert.ok(ab > ag && ar > ag, '堇應為紫色');
-  const [ur, ug, ub] = rgb(light.ume); assert.ok(ur > ub && ur > ug, '梅應偏紅');
-  const [sr, sg, sb] = rgb(light.sakura); assert.ok(sr > 230 && sg > 170 && sb > 190, '櫻應為淡粉');
-  assert.ok(lum(light.bg) > 0.9, '淺色底應很亮');
-  assert.ok(lum(dark.bg) < 0.03, '深色底應很暗');
+// 半透明文字：把前景色以不透明度疊在底色上，再算對比度
+const blend = (fg, bg, a) => '#' + [1, 3, 5].map((i) => Math.round(a * parseInt(fg.slice(i, i + 2), 16) + (1 - a) * parseInt(bg.slice(i, i + 2), 16)).toString(16).padStart(2, '0')).join('');
+const opacityOf = (re) => parseFloat(re.exec(css)[1]);
+for (const [name, P] of [['淺色', light], ['深色', dark]]) {
+  test(`${name}：標題列與分頁列上的半透明日文輔助小字，對比度 ≥ 4.5`, () => {
+    const topbar = opacityOf(/#topbar \.jp \{[^}]*opacity: ([\d.]+)/);
+    const tab = opacityOf(/#subtabs a \.jp \{[^}]*opacity: ([\d.]+)/);
+    const tabOn = opacityOf(/#subtabs a\[aria-current="page"\] \.jp \{[^}]*opacity: ([\d.]+)/);
+    // 分頁底色是白色半透明疊在標題列上（.10），用標題列色近似
+    const checks = [
+      ['標題上的小字', blend(P['bar-ink'], P.bar, topbar), P.bar],
+      ['分頁小字', blend(P['bar-ink'], P.bar, tab), P.bar],
+      ['選取分頁小字', blend(P['on-highlight'], P.highlight, tabOn), P.highlight],
+    ];
+    for (const [label, fg, bg] of checks) {
+      const c = contrast(fg, bg);
+      assert.ok(c >= 4.5, `${name} ${label} ${fg} on ${bg} = ${c.toFixed(2)} < 4.5`);
+    }
+  });
+}
+
+test('三個原色與配色表一致（#b5a199、#e3e0ca、#c6cbd0）', () => {
+  assert.equal(light.mauve.toLowerCase(), '#b5a199');
+  assert.equal(light.cream.toLowerCase(), '#e3e0ca');
+  assert.equal(light.mist.toLowerCase(), '#c6cbd0');
+  // 原色確實有被用到：選取狀態＝玫瑰褐、首頁標題區＝米黃、深色模式的次要強調＝藍灰
+  assert.equal(light.highlight.toLowerCase(), light.mauve.toLowerCase());
+  assert.equal(light.hero.toLowerCase(), light.cream.toLowerCase());
+  assert.equal(dark['accent-2'].toLowerCase(), light.mist.toLowerCase());
+  assert.equal(dark.accent.toLowerCase(), light.mauve.toLowerCase());
 });
 
-test('舊的木色主題不再殘留（樣式、網頁、manifest、圖示）', () => {
-  const OLD = ['#8a4f1a', '#e0a45e', '#2a2118', '#f6f1e8', '#efe7d8', '#f1e6d2', '#d9a05b', '#1b1610'];
+test('色彩關係：主色是調暗的玫瑰褐、標題列是調暗的藍灰、底色是調亮的米黃', () => {
+  const hue = (h) => { const [r, g, b] = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255); const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; if (!d) return 0; let x = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return ((x * 60) + 360) % 360; };
+  assert.ok(lum(light.accent) < lum(light.mauve), '主色要比原色暗');
+  assert.ok(Math.abs(hue(light.accent) - hue(light.mauve)) < 25, '主色色相要接近玫瑰褐');
+  assert.ok(lum(light.bar) < lum(light.mist), '標題列要比藍灰原色暗');
+  assert.ok(Math.abs(hue(light.bar) - hue(light.mist)) < 25, '標題列色相要接近藍灰');
+  assert.ok(lum(light.bg) > lum(light.cream), '頁面底色要比米黃原色亮');
+  assert.ok(Math.abs(hue(light.bg) - hue(light.cream)) < 25, '底色色相要接近米黃');
+  assert.ok(lum(dark.bg) < 0.03 && lum(light.bg) > 0.85, '淺色底很亮、深色底很暗');
+});
+
+test('舊的主題色不再殘留（木色、令和紫粉）', () => {
+  const OLD = ['#8a4f1a', '#e0a45e', '#2a2118', '#f6f1e8', '#efe7d8', '#f1e6d2', '#d9a05b', '#1b1610',
+    '#5f3f99', '#38284f', '#fbf5f7', '#f3a6bb', '#b83a63', '#f6c3d1', '#f9e1e8', '#c9afee', '#17121d', '#ee8aa8'];
   for (const f of ['css/style.css', 'index.html', 'manifest.webmanifest', 'icons/icon.svg']) {
     const txt = read(f).toLowerCase();
     for (const hex of OLD) assert.ok(!txt.includes(hex), `${f} 仍含舊色 ${hex}`);
   }
+  assert.ok(!/--ume|--sakura|reiwa|令和/.test(css + read('index.html')), '令和三色的名稱與樣式不應殘留');
 });
 
 test('瀏覽器與安裝後的主題色與標題列色一致', () => {
@@ -72,16 +112,17 @@ test('瀏覽器與安裝後的主題色與標題列色一致', () => {
   assert.equal(meta, light.bar.toLowerCase());
   assert.equal(man.theme_color.toLowerCase(), light.bar.toLowerCase());
   assert.equal(man.background_color.toLowerCase(), light.bar.toLowerCase());
-  assert.ok(read('icons/icon.svg').includes(light.bar), '圖示底色應與標題列色一致');
+  const svg = read('icons/icon.svg').toLowerCase();
+  assert.ok(svg.includes(light.bar.toLowerCase()), '圖示底色應與標題列色一致');
+  assert.ok(svg.includes(light.mauve) && svg.includes(light.cream), '圖示用到玫瑰褐與米黃原色');
 });
 
-test('色彩物語：只寫查得到的事實', () => {
+test('首頁「本站配色」卡片：三個色碼與色票一致，並註明不是官方色票', () => {
   const html = read('index.html');
-  const story = /<details class="panel reiwa"[\s\S]*?<\/details>/.exec(html)[0];
-  assert.ok(story.includes('萬葉集') && story.includes('梅花之歌') && story.includes('大伴旅人') && story.includes('梅花之宴'));
-  assert.ok(story.includes('初春令月，氣淑風和，梅披鏡前之粉，蘭薰珮後之香'));
-  for (const w of ['櫻', '堇', '梅']) assert.ok(story.includes(w));
-  assert.ok(story.includes('不是官方色票'), '要註明不是官方色票');
+  const card = /<details class="panel palette"[\s\S]*?<\/details>/.exec(html)[0];
+  for (const k of ['mauve', 'cream', 'mist']) assert.ok(card.includes(light[k]), `卡片缺少 ${k} 的色碼 ${light[k]}`);
+  assert.ok(card.includes('不是傳統色名或官方色票'));
+  for (const k of ['sw mauve', 'sw cream', 'sw mist']) assert.ok(card.includes(k));
 });
 
 // ── 讀 PNG 像素（8-bit RGB/RGBA、非交錯）：確認手機桌面圖示也是新配色 ──
@@ -111,7 +152,7 @@ function pngPixel(buf, px, py) {
   return '#' + [out[o], out[o + 1], out[o + 2]].map((x) => x.toString(16).padStart(2, '0')).join('');
 }
 
-test('手機桌面圖示（PNG）的底色是新的標題列色，且不是舊木色', () => {
+test('手機桌面圖示（PNG）的底色是新的標題列色，且不是舊色', () => {
   for (const f of ['icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png']) {
     const corner = pngPixel(readFileSync(join(root, f)), 3, 3);
     assert.equal(corner.toLowerCase(), light.bar.toLowerCase(), `${f} 左上角像素 ${corner} 應為 ${light.bar}`);
@@ -120,6 +161,6 @@ test('手機桌面圖示（PNG）的底色是新的標題列色，且不是舊�
 
 test('讀 PNG 的測試本身有效：能分辨不同顏色', () => {
   const png = readFileSync(join(root, 'icons/icon-512.png'));
-  const center = pngPixel(png, 256, 330);              // 尺身中央偏下（淡粉的尺身）
+  const center = pngPixel(png, 256, 330);              // 尺身（玫瑰褐）
   assert.notEqual(center.toLowerCase(), light.bar.toLowerCase(), '中央不該是底色，代表真的有讀到不同像素');
 });
