@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, join, normalize } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = new URL('..', import.meta.url).pathname;
+const root = fileURLToPath(new URL('..', import.meta.url));
 const read = (p) => readFileSync(join(root, p), 'utf8');
 
 test('sw.js、app.js、index.html 的版本號一致', () => {
@@ -28,7 +29,7 @@ test('app.js 直接或間接匯入的檔案都在 ASSETS 裡（否則離線時�
   const walk = (file) => {
     if (seen.has(file)) return;
     seen.add(file);
-    for (const m of read(file).matchAll(/from\s+'(\.[^']+)'/g)) walk(normalize(join(dirname(file), m[1])));
+    for (const m of read(file).matchAll(/from\s+'(\.[^']+)'/g)) walk(normalize(join(dirname(file), m[1])).replaceAll('\\', '/'));
   };
   walk('js/app.js');
   assert.ok(seen.size >= 6);

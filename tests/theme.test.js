@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { inflateSync } from 'node:zlib';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = new URL('..', import.meta.url).pathname;
+const root = fileURLToPath(new URL('..', import.meta.url));
 const MASCOT_ORANGE = '#fdc672';     // 吉祥物圖示的底色（253,198,114）
 const read = (p) => readFileSync(join(root, p), 'utf8');
 const css = read('css/style.css');
