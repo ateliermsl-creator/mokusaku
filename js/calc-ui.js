@@ -246,6 +246,9 @@ export function createCalcUI({ $, state, save, readLen }) {
   /* ═════════════ 角梁・谷木（振れ隅）與配付椽 ═════════════ */
   function renderSumi() {
     const kind = segVal('su-kind'), name = kind === 'tani' ? '谷木' : '角梁', kname = kind === 'tani' ? '谷勾配' : '隅勾配';
+    $('su-def').textContent = kind === 'tani'
+      ? '谷木：兩個屋面在「凹進去」的轉角（入隅）相交，形成屋谷，例如 L 型、U 型屋頂的交會處；谷木下方是天溝。'
+      : '角梁（隅木）：兩個屋面在「外凸」的轉角（出隅）相交，例如四坡屋頂（寄棟、入母屋）的四個角；台灣傳統建築分老角梁、仔角梁兩層。';
     $('su-err').textContent = ''; $('su-h-err').textContent = '';
     const D = readLen('su-den', 'su-err'), N = readNum('su-n'), A = readNum('su-a');
     if (N.error || A.error) $('su-err').textContent = '坡度、振れ角請輸入數字';
