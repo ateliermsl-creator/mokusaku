@@ -12,7 +12,7 @@ import { createCalcUI, CALC_TOOLS } from './calc-ui.js';
 
 const $ = (id) => document.getElementById(id);
 const STORE = 'mokusaku.v1';
-const VERSION = '32'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
+const VERSION = '33'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
 
 /* ---------- 儲存（localStorage 可能被擋，全部包 try） ---------- */
 let state = {};
@@ -150,14 +150,26 @@ const KEYPAD_HTML = `
 <button type="button" class="k sq" data-k="×√2" aria-label="乘以根號二：裏目、對角線">×√2</button>
 <button type="button" class="k sq" data-k="÷√2" aria-label="除以根號二：角目">÷√2</button>
 `;
-function wireKeypad(host, getInput) {
-  host.innerHTML = KEYPAD_HTML;
+/** 數字按鍵（坡度、角度、面積等純數字欄位）：frac＝分數欄位多「/」「:」；int＝只能整數 */
+function numKeypadHtml({ frac = false, int = false } = {}) {
+  const k = (key, label = key, cls = 'k') => `<button type="button" class="${cls}" data-k="${key}"${key === 'bs' ? ' aria-label="退格"' : key === 'ac' ? ' aria-label="全部清除"' : ''}>${label}</button>`;
+  return `<div class="numpad">${k('7')}${k('8')}${k('9')}${k('bs', '⌫', 'k fn')}${k('4')}${k('5')}${k('6')}${k('ac', '清除', 'k fn')}${k('1')}${k('2')}${k('3')}${frac ? k('/', '/', 'k op') : '<span></span>'}${k('0')}${int ? '<span></span>' : k('.')}${frac ? k(':', ':', 'k op') : '<span></span>'}<span></span></div>`;
+}
+/** 分數用的「/」「:」：只能接在數字後面、一個欄位只能有一個 */
+function applyFracKey(value, s0, e0, key) {
+  const before = value.slice(0, s0), after = value.slice(e0);
+  if (!/\d$/.test(before) || /[/:]/.test(before + after)) return null;
+  return { value: before + key + after, caret: s0 + 1 };
+}
+function wireKeypad(host, getInput, html = KEYPAD_HTML) {
+  host.innerHTML = html;
   const press = (key) => {
     const input = getInput();
     if (!input) return;
     const s0 = input.selectionStart ?? input.value.length;
     const e0 = input.selectionEnd ?? s0;
-    const r = applyKey(input.value, s0, e0, key);
+    if (input.classList.contains('num') && (key === '.' && input.dataset.kp === 'int')) return;
+    const r = key === '/' || key === ':' ? applyFracKey(input.value, s0, e0, key) : applyKey(input.value, s0, e0, key);
     if (!r) return;
     input.value = r.value;
     input.setSelectionRange(r.caret, r.caret);
@@ -193,15 +205,24 @@ for (const [inp, btn] of [['calc-expr', 'calc-kb'], ['lb-len', 'lb-kb']]) {
 }
 applySysKb();
 
-/* ---------- 長度輸入面板（屋頂坡度、弧線半徑、對角線） ----------
-   點長度欄位 → 底部升起和台尺混算同一組按鍵；上方即時顯示算出幾 mm、幾丈幾尺。 */
+/* ---------- 底部輸入面板（不跳手機鍵盤） ----------
+   點長度欄位 → 升起台尺按鍵（丈尺寸分…），上方即時顯示算出幾 mm、幾丈幾尺；
+   點純數字欄位（坡度、角度、面積…）→ 升起數字按鍵。 */
 const sheetEl = $('sheet');
 let sheetTarget = null;
-const sheetFieldSel = '#page-calc .panel:not(#tab-mix):not(#tab-luban) input.len, #page-joint input.len';
+const sheetFieldSel = '#page-calc .panel:not(#tab-mix):not(#tab-luban) input.len, #page-calc input.num, #page-joint input.len';
 const fieldTitle = (el) => { const sp = el.closest('label') && el.closest('label').querySelector('span'); return sp ? sp.textContent.trim() : '長度'; };
 
+const isFrac = (el) => el.id === 'sl-val' && $('sl-mode').value === 'fraction';
 function updateSheetLive() {
   if (!sheetTarget) return;
+  if (sheetTarget.classList.contains('num')) {
+    const v = sheetTarget.value.trim(), row = sheetTarget.closest('.irow, .field');
+    const unit = row && row.querySelector('.iu') ? row.querySelector('.iu').textContent : '';
+    $('sheet-live').textContent = v ? `＝ ${v}${unit ? ` ${unit}` : ''}` : (isFrac(sheetTarget) ? '輸入「立上高/水平」，例如 4/10、1:2.5' : '輸入數字');
+    $('sheet-live').classList.remove('bad');
+    return;
+  }
   const r = softEval(sheetTarget.value);
   let text, bad = false;
   if (r.empty) text = '點數字，再點單位（丈・尺・寸・分・間・mm）';
@@ -219,8 +240,15 @@ function ensureVisible(el) { // 讓正在編輯的欄位停在面板上方、標
   if (r.bottom > limit) scrollBy({ top: r.bottom - limit + 8 });
   else if (r.top < top) scrollBy({ top: r.top - top });
 }
+let sheetKind = 'len';
 function openSheet(el) {
   sheetTarget = el;
+  const kind = el.classList.contains('num') ? `num${isFrac(el) ? '-frac' : el.dataset.kp === 'int' ? '-int' : ''}` : 'len';
+  if (kind !== sheetKind) {      // 換一組按鍵（按鍵的事件是掛在外框上，換內容不用重新綁）
+    sheetKind = kind;
+    $('sheet-keypad').innerHTML = kind === 'len' ? KEYPAD_HTML : numKeypadHtml({ frac: kind === 'num-frac', int: kind === 'num-int' });
+    $('sheet-keypad').classList.toggle('isnum', kind !== 'len');
+  }
   $('sheet-title').textContent = fieldTitle(el);
   sheetEl.hidden = false;
   document.body.classList.add('sheet-open');
@@ -250,7 +278,7 @@ document.addEventListener('focusin', (e) => { // 跳到別的（非長度）欄�
 document.addEventListener('pointerdown', (e) => { // 點面板與長度欄位以外的地方 → 收起
   if (!sheetTarget || sheetEl.contains(e.target)) return;
   const lab = e.target.closest('label');
-  if (e.target.closest('input.len') || (lab && lab.querySelector('input.len'))) return;
+  if (e.target.closest('input.len, input.num') || (lab && lab.querySelector('input.len, input.num'))) return;
   closeSheet();
 });
 addEventListener('resize', () => { if (sheetTarget) ensureVisible(sheetTarget); });

@@ -177,9 +177,9 @@ export function createCalcUI({ $, state, save, readLen }) {
   };
   function renderSlope() {
     const mode = segVal('sl-mode');
-    const [lab, unit, ph, im] = SL_UI[mode] || SL_UI.kobai;
+    const [lab, unit, ph] = SL_UI[mode] || SL_UI.kobai;
     $('sl-label').textContent = lab; $('sl-unit').textContent = unit;
-    $('sl-val').placeholder = ph; $('sl-val').inputMode = im;
+    $('sl-val').placeholder = ph;          // 一律用 App 的數字按鍵，不跳手機鍵盤
     $('sl-err').textContent = '';
     let n = null;
     try { n = parseSlope(mode, $('sl-val').value); } catch (e) { $('sl-err').textContent = e.message; }

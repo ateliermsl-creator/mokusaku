@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hant-TW" data-v="32">
+<html lang="zh-Hant-TW" data-v="33">
 <head>
   <meta charset="utf-8">
   <!-- 內容安全政策：只允許本站的程式與資源；不載入任何外部網站的內容（樣式允許行內 style 屬性，因為圖形與版面有用到） -->
@@ -149,7 +149,6 @@
 
       <div class="row">
         <button id="calc-save" type="button" class="btn primary">記錄</button>
-        <button id="calc-kb" type="button" class="btn">⌨ 改用手機鍵盤</button>
       </div>
       <div id="mix-fig"></div>
       <h2>同步換算 <i class="jp">公制・尺貫法・曲尺裏目</i></h2>
@@ -164,8 +163,9 @@
         先點數字，再點單位（丈・尺・寸・分・厘・間・mm・cm・m），連著點會自動相加，例如「2 丈 5 寸」；沒點單位的數字會當作 mm。<br>
         <b>×√2</b>：曲尺裏目／對角線（方材邊長 × √2 ＝ 對角線）；<b>÷√2</b>：角目（圓材直徑 ÷ √2 ＝ 可取的方材邊長）。<br>
         1 丈 = 10 尺，1 間 = 6 尺（日式）。1 台尺 = 10/33 公尺 ≈ 303.03 mm，與日本的 1 尺相同。<br>
-        點算式中間的位置，可以在那裡插入或修改。要輸入其他字，請按「改用手機鍵盤」。
+        點算式中間的位置，可以在那裡插入或修改。
       </p>
+      <p class="kbswitch">需要打按鍵上沒有的字時才用：<button id="calc-kb" type="button" class="linkbtn">⌨ 改用手機鍵盤</button></p>
     </section>
 
     <!-- 魯班尺 -->
@@ -178,10 +178,8 @@
       <p id="lb-hint" class="hint-line" aria-live="polite"></p>
       <div id="lb-sum" class="lb-sum" aria-live="polite"></div>
       <div class="keypad" id="lb-keypad" role="group" aria-label="輸入按鍵"></div>
-      <div class="row">
-        <button id="lb-kb" type="button" class="btn">⌨ 改用手機鍵盤</button>
-      </div>
       <div id="lb-panel" class="four"></div>
+      <p class="kbswitch">需要打按鍵上沒有的字時才用：<button id="lb-kb" type="button" class="linkbtn">⌨ 改用手機鍵盤</button></p>
     </section>
 
     <!-- 計算機選單（分組） -->
@@ -192,7 +190,7 @@
       <h3 class="sec-h">輸入</h3>
       <div class="icard">
       <select id="sl-mode" class="segsel" aria-label="坡度寫法"><option value="kobai">寸勾配</option><option value="angle">角度</option><option value="percent">%</option><option value="fraction">分數</option></select>
-      <label class="irow"><span class="il" id="sl-label">坡度</span><input id="sl-val" type="text" inputmode="decimal" autocomplete="off" placeholder="例：4"><span class="iu" id="sl-unit">寸</span></label>
+      <label class="irow"><span class="il" id="sl-label">坡度</span><input id="sl-val" class="num" type="text" inputmode="none" autocomplete="off" placeholder="例：4"><span class="iu" id="sl-unit">寸</span></label>
       </div>
       <p class="note">現場講法（寸）和圖面講法（度、%、分數）可以互換。分數請寫「立上高/水平」或「立上高:水平」，例如 4/10、1:2.5。</p>
       <div id="sl-err" class="err" role="alert"></div>
@@ -205,7 +203,7 @@
       <h3 class="sec-h">輸入</h3>
       <div class="icard">
       <label class="irow"><span class="il">殳（水平距離）</span><input id="ko-den" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：6 尺）"></label>
-      <label class="irow"><span class="il">坡度 <i class="jp">寸勾配</i></span><input id="ko-n" type="text" inputmode="decimal" autocomplete="off" placeholder="例：4"><span class="iu">寸</span></label>
+      <label class="irow"><span class="il">坡度 <i class="jp">寸勾配</i></span><input id="ko-n" class="num" type="text" inputmode="none" autocomplete="off" placeholder="例：4"><span class="iu">寸</span></label>
       </div>
       <p class="note">殳是從簷桁芯到屋脊芯的水平距離。</p>
       <div id="ko-err" class="err" role="alert"></div>
@@ -222,8 +220,8 @@
       <h3 class="sec-h">輸入</h3>
       <div class="icard">
       <label class="irow"><span class="il">殳（從桁芯量的水平距離）</span><input id="su-den" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：6 尺）"></label>
-      <label class="irow"><span class="il">平勾配</span><input id="su-n" type="text" inputmode="decimal" autocomplete="off" placeholder="例：4"><span class="iu">寸</span></label>
-      <label class="irow"><span class="il">振れ角 α</span><input id="su-a" type="text" inputmode="decimal" autocomplete="off" placeholder="空白 = 45（真隅）"><span class="iu">°</span></label>
+      <label class="irow"><span class="il">平勾配</span><input id="su-n" class="num" type="text" inputmode="none" autocomplete="off" placeholder="例：4"><span class="iu">寸</span></label>
+      <label class="irow"><span class="il">振れ角 α</span><input id="su-a" class="num" type="text" inputmode="none" autocomplete="off" placeholder="空白 = 45（真隅）"><span class="iu">°</span></label>
       </div>
       <p class="note">振れ角從垂直於簷桁的方向量起，45° 是真隅。</p>
       <div id="su-err" class="err" role="alert"></div>
@@ -249,7 +247,7 @@
       <div class="icard">
       <label class="irow"><span class="il">桁行（長邊） <i class="jp">桁行</i></span><input id="yn-b" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：4 間）"></label>
       <label class="irow"><span class="il">梁間（短邊） <i class="jp">梁間</i></span><input id="yn-w" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：3 間）"></label>
-      <label class="irow"><span class="il">坡度</span><input id="yn-n" type="text" inputmode="decimal" autocomplete="off" placeholder="例：4"><span class="iu">寸</span></label>
+      <label class="irow"><span class="il">坡度</span><input id="yn-n" class="num" type="text" inputmode="none" autocomplete="off" placeholder="例：4"><span class="iu">寸</span></label>
       </div>
       <h3 class="sec-h">出簷與間距</h3>
       <div class="icard">
@@ -269,8 +267,8 @@
       <div id="ar-fig" class="figwrap"></div>
       <h3 class="sec-h">輸入</h3>
       <div class="icard">
-      <label class="irow"><span class="il">水平投影面積</span><input id="ar-plan" type="text" inputmode="decimal" autocomplete="off" placeholder="例：66"><span class="iu">m²</span></label>
-      <label class="irow"><span class="il">坡度</span><input id="ar-n" type="text" inputmode="decimal" autocomplete="off" placeholder="例：4"><span class="iu">寸</span></label>
+      <label class="irow"><span class="il">水平投影面積</span><input id="ar-plan" class="num" type="text" inputmode="none" autocomplete="off" placeholder="例：66"><span class="iu">m²</span></label>
+      <label class="irow"><span class="il">坡度</span><input id="ar-n" class="num" type="text" inputmode="none" autocomplete="off" placeholder="例：4"><span class="iu">寸</span></label>
       </div>
       <p class="note">請填從正上方看到的屋頂面積（含出簷）。</p>
       <div id="ar-err" class="err" role="alert"></div>
@@ -328,7 +326,7 @@
         </label>
         <label class="field">
           <span>弦等分數</span>
-          <input id="arc-n" type="number" inputmode="numeric" min="2" max="40" step="1" value="8">
+          <input id="arc-n" class="num" data-kp="int" type="text" inputmode="none" autocomplete="off" value="8">
         </label>
       </div>
       <div id="arc-err" class="err" role="alert"></div>
@@ -351,7 +349,7 @@
       <select id="dg-mode" class="segsel" aria-label="計算方式"><option value="hyp">求斜邊</option><option value="leg">求另一邊</option><option value="angle">由角度求</option></select>
       <label class="irow"><span class="il" id="dg-la">水平（殳）</span><input id="diag-a" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：3 間）"></label>
       <label class="irow" id="dg-rb"><span class="il" id="dg-lb">垂直（勾）</span><input id="diag-b" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：4 間）"></label>
-      <label class="irow" id="dg-rang" hidden><span class="il">角度（對水平）</span><input id="dg-ang" type="text" inputmode="decimal" autocomplete="off" placeholder="例：53.13"><span class="iu">°</span></label>
+      <label class="irow" id="dg-rang" hidden><span class="il">角度（對水平）</span><input id="dg-ang" class="num" type="text" inputmode="none" autocomplete="off" placeholder="例：53.13"><span class="iu">°</span></label>
       </div>
       <p class="note">抓直角（矩出し）以 3:4:5 為基本。</p>
       <div id="diag-err" class="err" role="alert"></div>

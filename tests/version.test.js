@@ -104,3 +104,17 @@ test('安全：程式裡沒有 eval／new Function，也沒有對外連線', asy
   }
   for (const m of read('sw.js').matchAll(/https?:\/\/[^\s'"`]+/g)) assert.fail(`sw.js 不該有外部網址：${m[0]}`);
 });
+
+test('木作計算機的欄位都不跳手機鍵盤：一律 inputmode="none"，長度用台尺按鍵、純數字用數字按鍵', () => {
+  const html = read('index.html');
+  const calc = html.slice(html.indexOf('<section id="page-calc"'), html.indexOf('</section><!-- /page-calc -->'));
+  const inputs = [...calc.matchAll(/<input\b[^>]*>/g)].map((m) => m[0]);
+  assert.ok(inputs.length > 20);
+  for (const tag of inputs) {
+    const id = /id="([^"]+)"/.exec(tag)?.[1];
+    assert.ok(!/type="number"/.test(tag), `${id}：不要用 type="number"（會跳手機鍵盤）`);
+    assert.ok(/inputmode="none"/.test(tag), `${id}：要設 inputmode="none"`);
+    assert.ok(/class="[^"]*\b(len|num)\b/.test(tag), `${id}：要是 len（台尺按鍵）或 num（數字按鍵）`);
+  }
+  assert.ok(!/inputMode = /.test(read('js/calc-ui.js')), 'calc-ui.js 不可把欄位改回手機鍵盤');
+});
