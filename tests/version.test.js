@@ -122,8 +122,8 @@ test('木作計算機的欄位都不跳手機鍵盤：一律 inputmode="none"，
 test('輸入時版面不跳動：結果框永遠固定四行、每行固定行高；提示與面板即時數值固定高度', () => {
   const css = read('css/style.css'), app = read('js/app.js');
   for (const re of [/#calc-out \.mm \{ height: \d+px; line-height: \d+px; \}/, /#calc-out \.shaku \{ height: \d+px; line-height: \d+px; \}/,
-    /#calc-out \.shaku2 \{ height: \d+px; line-height: \d+px; \}/, /#lb-sum > div \{ height: \d+px; line-height: \d+px; \}/,
-    /#calc-hint, #lb-hint \{ min-height: [\d.]+em/, /\.sheet-live \{ white-space: nowrap;/]) assert.match(css, re);
+    /#calc-out \.shaku2 \{ height: \d+px; line-height: \d+px; \}/, /#lb-sum \.lb-len \{ height: \d+px; line-height: \d+px; padding: 0;/, /#lb-sum \.lb-line \{ height: \d+px; line-height: \d+px; padding: 0;/,
+    /#calc-hint, #lb-hint \{ height: [\d.]+em; line-height: [\d.]+em; white-space: nowrap;/, /\.sheet-live \{ white-space: nowrap;/]) assert.match(css, re);
   // renderCalc 的每一種狀態都要畫出同樣的結果框（不能清空）
   const body = app.slice(app.indexOf('function renderCalc()'), app.indexOf('function renderHistory()'));
   assert.ok(!/out\.innerHTML = ''/.test(body), '結果框不可清空（會讓按鍵往上跳）');
