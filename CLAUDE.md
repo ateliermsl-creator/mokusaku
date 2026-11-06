@@ -32,7 +32,7 @@
 
 ## 測試
 
-- 指令：`npm test`（目前 124 項）。
+- 指令：`npm test`（目前 125 項）。
 - 本機預覽：`python3 -m http.server 8000`。
 - 測試路徑要用 `fileURLToPath`，不要用 `new URL(...).pathname`（Windows 會壞）。
 - 目前沒有：備份匯入匯出、IndexedDB、Playwright 相關測試。之後若新增這些功能，要同步補對應測試。

@@ -61,7 +61,14 @@ function refTable(ruler, cfg) {
 export function renderLubanSummary(box, mm, cfg, partial) {
   box.textContent = '';
   box.classList.toggle('partial', !!partial);
-  if (mm == null || !Number.isFinite(mm)) return;
+  // 沒有數字時也顯示同樣行數的淡色佔位，高度固定，下方按鍵才不會被推動
+  if (mm == null || !Number.isFinite(mm)) {
+    box.classList.add('is-blank');
+    box.append(h('div', { class: 'lb-len' }, h('b', { text: '0 mm' }), h('small', { text: '0 尺' })));
+    for (const ruler of Object.values(RULERS)) box.append(h('div', { class: 'lb-line' }, h('span', { text: ruler.name }), h('b', { text: '—' })));
+    return;
+  }
+  box.classList.remove('is-blank');
   box.append(h('div', { class: 'lb-len' }, h('b', { text: `${fmtMm(mm, 1)} mm` }), h('small', { text: `${toTaiShaku(mm)}（${toShaku(mm, 3)} 尺）` })));
   for (const ruler of Object.values(RULERS)) {
     const c = checkRuler(ruler, cfg[ruler.id] || ruler.cycles[0].mm, mm);

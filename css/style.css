@@ -532,3 +532,17 @@ a.chip { display: inline-flex; align-items: center; text-decoration: none; }
 .jt-ref b { font-size: 14px; }
 .jt-ref p { margin: 2px 0 0; font-size: 13px; line-height: 1.65; color: var(--muted); }
 #jt-chips { flex-wrap: wrap; overflow-x: visible; }
+
+/* 輸入時版面不跳動：結果框、提示、魯班尺摘要、底部面板的即時數值都固定高度 */
+#calc-out > div, #lb-sum > div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#calc-out.is-blank .mm, #calc-out.is-blank .shaku, #calc-out.is-blank .shaku2, #lb-sum.is-blank > div { opacity: .35; }
+#calc-out .shaku.err-line { color: var(--err); font-size: 16px; opacity: 1; }
+/* 每行固定行高（px），不同字型的字（例如破折號）也不會把行撐高 */
+#calc-out .mm { height: 40px; line-height: 40px; }
+#calc-out .shaku { height: 28px; line-height: 28px; }
+#calc-out .shaku2 { height: 20px; line-height: 20px; }
+#lb-sum > div { height: 24px; line-height: 24px; }
+#calc-out.is-blank .shaku.err-line { opacity: 1; }
+#calc-hint, #lb-hint { min-height: 2.9em; line-height: 1.45; }
+.sheet-live { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+

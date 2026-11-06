@@ -12,7 +12,7 @@ import { createCalcUI, CALC_TOOLS } from './calc-ui.js';
 
 const $ = (id) => document.getElementById(id);
 const STORE = 'mokusaku.v1';
-const VERSION = '34'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
+const VERSION = '35'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
 
 /* ---------- 儲存（localStorage 可能被擋，全部包 try） ---------- */
 let state = {};
@@ -52,20 +52,32 @@ let history = (Array.isArray(state.history) ? state.history : [])
 const luban = state.luban && typeof state.luban === 'object' ? state.luban : {}; // 魯班尺一循環的長度選擇（魯班尺分頁用）
 function setFour(mm, partial) { renderFour($('four-panel'), mm, { partial }); }
 
+// 結果框永遠是同樣的四行（空白時顯示淡色的 0），高度固定，按鍵才不會被推上推下
+function showCalcResult(out, mm, { empty = false, error = '' } = {}) {
+  const has = Number.isFinite(mm);
+  out.innerHTML = `
+    <div class="mm">${has ? fmtMm(mm, calcUI.prefs().dec) : empty ? '0' : '—'}<small>mm</small></div>
+    <div class="shaku"></div>
+    <div class="shaku2">${has ? `${toShaku(mm)} 尺　／　${n(mm / 1000, 4)} m` : '0 尺　／　0 m'}</div>
+    <div class="shaku2 jp">日式 ${has ? toKenShaku(mm) : '—'}</div>`;
+  const sh = out.querySelector('.shaku');
+  sh.textContent = error || (has ? toTaiShaku(mm) : '0 尺');   // 錯誤訊息用 textContent
+  sh.classList.toggle('err-line', !!error);
+  out.classList.toggle('is-blank', !has);
+}
 function renderCalc() {
   const out = $('calc-out'), hint = $('calc-hint');
   const r = softEval($('calc-expr').value);
   out.classList.remove('partial');
   hint.textContent = '';
-  if (r.empty) { out.innerHTML = ''; $('mix-fig').innerHTML = ''; setFour(null); return null; }
+  if (r.empty) { showCalcResult(out, NaN, { empty: true }); $('mix-fig').innerHTML = ''; setFour(null); return null; }
   if (r.error) {
-    out.innerHTML = '<div class="err" style="display:block;margin:0"></div>';
-    out.firstElementChild.textContent = r.error.message;
+    showCalcResult(out, NaN, { error: r.error.message });
     $('mix-fig').innerHTML = ''; setFour(null);
     return null;
   }
   if (r.incomplete) {
-    out.innerHTML = '';
+    showCalcResult(out, NaN, { empty: true });
     hint.textContent = r.pending ? '請點單位：丈、尺、寸、分、間、mm' : '請繼續輸入數字';
     $('mix-fig').innerHTML = ''; setFour(null);
     return null;
@@ -73,16 +85,12 @@ function renderCalc() {
   const mm = r.mm;
   $('mix-fig').innerHTML = composition(mm);
   setFour(mm, !!r.partial);
-  out.innerHTML = `
-    <div class="mm">${fmtMm(mm, calcUI.prefs().dec)}<small>mm</small></div>
-    <div class="shaku">${toTaiShaku(mm)}</div>
-    <div class="shaku2">${toShaku(mm)} 尺　／　${n(mm / 1000, 4)} m</div>
-    <div class="shaku2 jp">日式 ${toKenShaku(mm)}</div>`;
+  showCalcResult(out, mm);
   if (r.partial) {
     out.classList.add('partial');
-    hint.textContent = r.pending ? '最後的數字還沒選單位，請點 丈／尺／寸／分…（目前顯示的是前面已算好的部分）'
-      : r.dangling ? '請繼續輸入數字（目前顯示的是前面已算好的部分）'
-        : '括號還沒補完（目前以補上右括號計算）';
+    hint.textContent = r.pending ? '最後的數字還沒點單位（先顯示前面的結果）'
+      : r.dangling ? '請繼續輸入數字（先顯示前面的結果）'
+        : '括號還沒補完（先當作已補上右括號）';
     return null; // 還沒輸入完的結果不可記錄
   }
   if (r.pending) hint.textContent = '沒點單位的數字會當作 mm';
@@ -324,7 +332,7 @@ function renderLubanTab() {
   else if (r.incomplete) hint.textContent = r.pending ? '請點單位：丈、尺、寸、分、間、mm' : '請繼續輸入數字';
   else if (!r.empty) {
     mm = r.mm; partial = !!r.partial;
-    if (partial) hint.textContent = '還沒輸入完，先以前面已算好的部分判斷（暫時不能套用建議）';
+    if (partial) hint.textContent = '還沒輸入完（先以前面的結果判斷）';
     else if (r.pending) hint.textContent = '沒點單位的數字會當作 mm';
   }
   renderLubanSummary($('lb-sum'), mm, luban, partial);
