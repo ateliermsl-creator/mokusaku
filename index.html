@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hant-TW" data-v="31">
+<html lang="zh-Hant-TW" data-v="32">
 <head>
   <meta charset="utf-8">
   <!-- 內容安全政策：只允許本站的程式與資源；不載入任何外部網站的內容（樣式允許行內 style 屬性，因為圖形與版面有用到） -->
@@ -30,15 +30,9 @@
 </head>
 <body>
   <header id="topbar" hidden>
+    <a id="backBtn" href="#/calc" aria-label="回計算機選單" title="回計算機選單" hidden><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></svg></a>
     <a id="homeBtn" href="#/" aria-label="回首頁" title="回首頁"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M12 3.2 2.6 11.6a.8.8 0 0 0 .5 1.4H5v7.2c0 .5.4.8.8.8H10v-5.6h4V20h4.2c.5 0 .8-.3.8-.8V13h1.9a.8.8 0 0 0 .5-1.4L12 3.2z"/></svg></a>
     <h1><span id="topTitle">柴柴木作</span> <i class="jp" id="topJp"></i></h1>
-    <nav id="subtabs" aria-label="計算機分頁" hidden>
-      <a href="#/calc/mix" data-sub="mix"><b>台尺混算</b><i class="jp">尺貫法</i></a>
-      <a href="#/calc/roof" data-sub="roof"><b>屋頂坡度</b><i class="jp">勾配・隅木</i></a>
-      <a href="#/calc/arc" data-sub="arc"><b>弧線半徑</b><i class="jp">R・矢高</i></a>
-      <a href="#/calc/diag" data-sub="diag"><b>對角線</b><i class="jp">矩出し</i></a>
-      <a href="#/calc/luban" data-sub="luban"><b>魯班尺</b><i class="jp">字位檢核</i></a>
-    </nav>
   </header>
 
   <div id="iab" hidden></div>
@@ -57,7 +51,7 @@
         <p>日式大木作工具箱・台尺與規矩術，現場隨身好用</p>
         <p class="jp">大工・墨付け・規矩術</p>
       </section>
-      <a class="tool" href="#/calc"><div class="ph">🧮</div><div><b>木作計算機 <i class="jp">電卓</i></b><small>台尺混算・屋頂坡度與角梁椽木・弧線半徑・對角線抓直角</small></div><span class="arrow">›</span></a>
+      <a class="tool" href="#/calc"><div class="ph">🧮</div><div><b>木作計算機 <i class="jp">電卓</i></b><small>坡度換算・勾股玄・角梁谷木・屋頂伏圖・屋面面積・台尺混算・三邊・速查表</small></div><span class="arrow">›</span></a>
       <a class="tool" href="#/joint"><div class="ph">🪚</div><div><b>仕口・継手 比例速查 <i class="jp">しぐち・つぎて</i></b><small>輸入材成，算出追掛大栓継ぎ（犁壁榫）、鎌継ぎ、腰掛蟻継ぎ各部尺寸並看圖；比例出自文獻</small></div><span class="arrow">›</span></a>
       <a class="tool" href="#/glossary"><div class="ph">📖</div><div><b>台日大木作名詞＆構架對照庫</b><small>日本・台灣傳統・現場行話四維對照；點構架圖查名稱</small></div><span class="arrow">›</span></a>
       <a class="tool" href="#/install"><div class="ph">📲</div><div><b>加到手機桌面</b><small>像 App 一樣使用・教學</small></div><span class="arrow">›</span></a>
@@ -190,66 +184,129 @@
       <div id="lb-panel" class="four"></div>
     </section>
 
-    <!-- 屋頂坡度・角梁・椽木 -->
-    <section id="tab-roof" class="panel" hidden>
-      <div class="grid2">
-        <label class="field">
-          <span>坡度輸入方式 <i class="jp">勾配</i></span>
-          <select id="roof-mode">
-            <option value="kobai">坡度（水平 10 對立上高幾寸）</option>
-            <option value="angle">角度（°）</option>
-            <option value="riserun">立上高 ÷ 水平長</option>
-          </select>
-        </label>
-        <label class="field" id="roof-f-kobai">
-          <span>坡度（寸） <i class="jp">寸勾配</i></span>
-          <input id="roof-kobai" type="number" inputmode="decimal" step="0.1" min="0" placeholder="例：4.5">
-        </label>
-        <label class="field" id="roof-f-angle" hidden>
-          <span>角度（°）</span>
-          <input id="roof-angle" type="number" inputmode="decimal" step="0.1" min="0" max="89.9" placeholder="例：24.2">
-        </label>
-        <label class="field" id="roof-f-rise" hidden>
-          <span>立上高 <i class="jp">立上り</i></span>
-          <input id="roof-rise" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：1 尺 5 寸）">
-        </label>
-        <label class="field" id="roof-f-run" hidden>
-          <span>水平長</span>
-          <input id="roof-run" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：3 尺 3 寸）">
-        </label>
-      </div>
-      <div id="roof-err" class="err" role="alert"></div>
-      <div id="roof-basic" class="card"></div>
-      <div id="roof-fig"></div>
+    <!-- 計算機選單（分組） -->
+    <section id="tab-menu" class="panel" hidden><div id="calc-menu"></div></section>
 
-      <h2>計算長度</h2>
-      <label class="field">
-        <span>單邊水平長 a（從簷桁到屋脊的水平距離）</span>
-        <input id="roof-a" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：2 丈）">
-      </label>
-      <div id="roof-a-err" class="err" role="alert"></div>
-      <div id="roof-lengths" class="card"></div>
-      <div id="hip-fig"></div>
-
-      <h2>椽木逐支遞減 <i class="jp">配付垂木</i></h2>
-      <div class="grid2">
-        <label class="field">
-          <span>椽木間距 <i class="jp">ピッチ</i></span>
-          <input id="roof-pitch" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：1 尺）">
-        </label>
-        <label class="field">
-          <span>第一支椽木的水平長</span>
-          <input id="roof-first" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="空白 = 用上面的 a">
-        </label>
+    <section id="tab-slope" class="panel ctool" hidden>
+      <div id="sl-fig" class="figwrap"></div>
+      <h3 class="sec-h">輸入</h3>
+      <div class="icard">
+      <select id="sl-mode" class="segsel" aria-label="坡度寫法"><option value="kobai">寸勾配</option><option value="angle">角度</option><option value="percent">%</option><option value="fraction">分數</option></select>
+      <label class="irow"><span class="il" id="sl-label">坡度</span><input id="sl-val" type="text" inputmode="decimal" autocomplete="off" placeholder="例：4"><span class="iu" id="sl-unit">寸</span></label>
       </div>
-      <div id="roof-h-err" class="err" role="alert"></div>
-      <div id="roof-haitsuke" class="card"></div>
-      <div id="hai-fig"></div>
-      <p class="note">
-        公式（水平股 = 10）：椽木斜長 = √(10² + 勾²)；角梁長弦 = √(200 + 勾²)；角梁坡度 = 勾 ÷ √2。
-        算出的是理論值，簷口收頭、封簷板等現場加減請另外處理。
-      </p>
+      <p class="note">現場講法（寸）和圖面講法（度、%、分數）可以互換。分數請寫「立上高/水平」或「立上高:水平」，例如 4/10、1:2.5。</p>
+      <div id="sl-err" class="err" role="alert"></div>
+      <h3 class="sec-h">結果</h3>
+      <div id="sl-out" class="rbox" aria-live="polite"></div>
     </section>
+
+    <section id="tab-kouko" class="panel ctool" hidden>
+      <div id="ko-fig" class="figwrap"></div>
+      <h3 class="sec-h">輸入</h3>
+      <div class="icard">
+      <label class="irow"><span class="il">殳（水平距離）</span><input id="ko-den" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：6 尺）"></label>
+      <label class="irow"><span class="il">坡度 <i class="jp">寸勾配</i></span><input id="ko-n" type="text" inputmode="decimal" autocomplete="off" placeholder="例：4"><span class="iu">寸</span></label>
+      </div>
+      <p class="note">殳是從簷桁芯到屋脊芯的水平距離。</p>
+      <div id="ko-err" class="err" role="alert"></div>
+      <h3 class="sec-h">結果</h3>
+      <div id="ko-out" class="rbox" aria-live="polite"></div>
+    </section>
+
+    <section id="tab-sumi" class="panel ctool" hidden>
+      <div id="su-fig" class="figwrap"></div>
+      <h3 class="sec-h">種類</h3>
+      <div class="icard">
+      <select id="su-kind" class="segsel" aria-label="種類"><option value="de">角梁（出隅）</option><option value="tani">谷木（入隅）</option></select>
+      </div>
+      <h3 class="sec-h">輸入</h3>
+      <div class="icard">
+      <label class="irow"><span class="il">殳（從桁芯量的水平距離）</span><input id="su-den" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：6 尺）"></label>
+      <label class="irow"><span class="il">平勾配</span><input id="su-n" type="text" inputmode="decimal" autocomplete="off" placeholder="例：4"><span class="iu">寸</span></label>
+      <label class="irow"><span class="il">振れ角 α</span><input id="su-a" type="text" inputmode="decimal" autocomplete="off" placeholder="空白 = 45（真隅）"><span class="iu">°</span></label>
+      </div>
+      <p class="note">振れ角從垂直於簷桁的方向量起，45° 是真隅。</p>
+      <div id="su-err" class="err" role="alert"></div>
+      <h3 class="sec-h">結果</h3>
+      <div id="su-out" class="rbox" aria-live="polite"></div>
+      <h3 class="sec-h">配付椽逐支遞減 <i class="jp">配付垂木</i></h3>
+      <div class="icard">
+      <label class="irow"><span class="il">椽木間距 <i class="jp">ピッチ</i></span><input id="su-p" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：1 尺 5 寸）"></label>
+      <label class="irow"><span class="il">第一支椽木的水平長</span><input id="su-first" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="空白 = 上面的殳"></label>
+      </div>
+      <div id="su-h-err" class="err" role="alert"></div>
+      <div id="su-hai" class="rbox"></div>
+      <div id="su-hai-fig" class="figwrap"></div>
+    </section>
+
+    <section id="tab-yane" class="panel ctool" hidden>
+      <div id="yn-fig" class="figwrap"></div>
+      <h3 class="sec-h">形式</h3>
+      <div class="icard">
+      <select id="yn-shape" class="segsel" aria-label="屋頂形式"><option value="kiri">切妻（兩坡）</option><option value="yose">寄棟（四坡）</option></select>
+      </div>
+      <h3 class="sec-h">平面尺寸</h3>
+      <div class="icard">
+      <label class="irow"><span class="il">桁行（長邊） <i class="jp">桁行</i></span><input id="yn-b" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：4 間）"></label>
+      <label class="irow"><span class="il">梁間（短邊） <i class="jp">梁間</i></span><input id="yn-w" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：3 間）"></label>
+      <label class="irow"><span class="il">坡度</span><input id="yn-n" type="text" inputmode="decimal" autocomplete="off" placeholder="例：4"><span class="iu">寸</span></label>
+      </div>
+      <h3 class="sec-h">出簷與間距</h3>
+      <div class="icard">
+      <label class="irow"><span class="il">軒の出（簷出） <i class="jp">軒の出</i></span><input id="yn-e" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：2 尺）"></label>
+      <div id="yn-eg-row">
+      <label class="irow"><span class="il">けらば出（山牆出簷） <i class="jp">けらば</i></span><input id="yn-eg" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：1 尺 5 寸）"></label>
+      </div>
+      <label class="irow"><span class="il">椽木間距 <i class="jp">垂木ピッチ</i></span><input id="yn-p" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：1 尺 5 寸）"></label>
+      </div>
+      <p class="note">軒の出、けらば出請填水平距離（量到先端）。</p>
+      <div id="yn-err" class="err" role="alert"></div>
+      <h3 class="sec-h">結果</h3>
+      <div id="yn-out" class="rbox" aria-live="polite"></div>
+    </section>
+
+    <section id="tab-area" class="panel ctool" hidden>
+      <div id="ar-fig" class="figwrap"></div>
+      <h3 class="sec-h">輸入</h3>
+      <div class="icard">
+      <label class="irow"><span class="il">水平投影面積</span><input id="ar-plan" type="text" inputmode="decimal" autocomplete="off" placeholder="例：66"><span class="iu">m²</span></label>
+      <label class="irow"><span class="il">坡度</span><input id="ar-n" type="text" inputmode="decimal" autocomplete="off" placeholder="例：4"><span class="iu">寸</span></label>
+      </div>
+      <p class="note">請填從正上方看到的屋頂面積（含出簷）。</p>
+      <div id="ar-err" class="err" role="alert"></div>
+      <h3 class="sec-h">結果</h3>
+      <div id="ar-out" class="rbox" aria-live="polite"></div>
+    </section>
+
+    <section id="tab-table" class="panel ctool" hidden>
+      <div id="tb-out"></div>
+      <p class="note">10 寸（矩勾配）＝ 45°。伸長率 ＝ 玄 ÷ 殳；隅勾配 ＝ 平勾配 ÷ √2（真隅）。點一列可以直接帶到「勾股玄」計算。</p>
+    </section>
+
+    <section id="tab-log" class="panel ctool" hidden>
+      <div id="lg-out"></div>
+    </section>
+
+    <section id="tab-settings" class="panel ctool" hidden>
+      <h3 class="sec-h">小數位數</h3>
+      <div class="icard">
+      <select id="st-dec" class="segsel nopersist" aria-label="小數位數"><option value="0">0</option><option value="1">1</option><option value="2">2</option></select>
+      </div>
+      <p class="note">小數位數用在 mm、m²、坪的顯示；坡度（寸）與伸長率的位數固定。</p>
+      <h3 class="sec-h">角度</h3>
+      <div class="icard">
+      <select id="st-ang" class="segsel nopersist" aria-label="角度顯示"><option value="deg">度</option><option value="dms">度分秒</option></select>
+      </div>
+      <p class="note">度分秒會顯示成 21°48'05.1" 的格式。</p>
+      <h3 class="sec-h">計算紀錄</h3>
+      <div class="icard" id="st-log"></div>
+      <h3 class="sec-h">計算方式</h3>
+      <div class="icard txt">1 台尺 ＝ 10/33 m（與日本曲尺相同）。角梁、谷木、屋頂伏圖以等勾配為對象，不含鼻隠し（封簷板）、母屋成、材料尺寸的加減。中勾、長玄、短玄的叫法依地區與流派可能不同。</div>
+      <h3 class="sec-h">使用提醒</h3>
+      <div class="icard txt">計算結果是參考值，加工、施工前請自行確認數值。</div>
+      <p class="note" id="st-ver"></p>
+    </section>
+
 
     <!-- 弧線半徑 -->
     <section id="tab-arc" class="panel" hidden>
@@ -287,20 +344,19 @@
     </section>
 
     <!-- 對角線・抓直角 -->
-    <section id="tab-diag" class="panel" hidden>
-      <div class="grid2">
-        <label class="field">
-          <span>短邊</span>
-          <input id="diag-a" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：3 間）">
-        </label>
-        <label class="field">
-          <span>長邊</span>
-          <input id="diag-b" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：4 間）">
-        </label>
+    <section id="tab-diag" class="panel ctool" hidden>
+      <div id="diag-fig" class="figwrap"></div>
+      <h3 class="sec-h">輸入</h3>
+      <div class="icard">
+      <select id="dg-mode" class="segsel" aria-label="計算方式"><option value="hyp">求斜邊</option><option value="leg">求另一邊</option><option value="angle">由角度求</option></select>
+      <label class="irow"><span class="il" id="dg-la">水平（殳）</span><input id="diag-a" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：3 間）"></label>
+      <label class="irow" id="dg-rb"><span class="il" id="dg-lb">垂直（勾）</span><input id="diag-b" class="len" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="點這裡輸入（例：4 間）"></label>
+      <label class="irow" id="dg-rang" hidden><span class="il">角度（對水平）</span><input id="dg-ang" type="text" inputmode="decimal" autocomplete="off" placeholder="例：53.13"><span class="iu">°</span></label>
       </div>
+      <p class="note">抓直角（矩出し）以 3:4:5 為基本。</p>
       <div id="diag-err" class="err" role="alert"></div>
-      <div id="diag-out" class="card"></div>
-      <div id="diag-fig"></div>
+      <h3 class="sec-h">結果</h3>
+      <div id="diag-out" class="rbox" aria-live="polite"></div>
       <h2>抓直角檢查 <i class="jp">矩出し</i></h2>
       <p class="note" style="margin-top:0">量兩條對角線，長度相同就是直角。</p>
       <div class="grid2">

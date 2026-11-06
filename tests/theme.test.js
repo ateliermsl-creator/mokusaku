@@ -59,15 +59,16 @@ for (const [name, P] of [['淺色', light], ['深色', dark]]) {
 const blend = (fg, bg, a) => '#' + [1, 3, 5].map((i) => Math.round(a * parseInt(fg.slice(i, i + 2), 16) + (1 - a) * parseInt(bg.slice(i, i + 2), 16)).toString(16).padStart(2, '0')).join('');
 const opacityOf = (re) => parseFloat(re.exec(css)[1]);
 for (const [name, P] of [['淺色', light], ['深色', dark]]) {
-  test(`${name}：標題列與分頁列上的半透明日文輔助小字，對比度 ≥ 4.5`, () => {
+  test(`${name}：標題列上的半透明日文小字、計算機的分段按鈕與選單圖示，對比度足夠`, () => {
     const topbar = opacityOf(/#topbar \.jp \{[^}]*opacity: ([\d.]+)/);
-    const tab = opacityOf(/#subtabs a \.jp \{[^}]*opacity: ([\d.]+)/);
-    const tabOn = opacityOf(/#subtabs a\[aria-current="page"\] \.jp \{[^}]*opacity: ([\d.]+)/);
-    // 分頁底色是白色半透明疊在標題列上（.10），用標題列色近似
+    // 計算機改用分組選單＋返回鍵（不再有分頁列）；分段按鈕選取時是 on-highlight 字疊在 highlight 底
+    assert.ok(/\.seg2 button\[aria-pressed="true"\] \{[^}]*background: var\(--highlight\); color: var\(--on-highlight\)/.test(css), '分段按鈕選取色');
+    assert.ok(/\.mi \{[^}]*stroke: var\(--accent\)/.test(css), '選單圖示用主色');
+    assert.ok(contrast(P.accent, P.surface) >= 3, '選單圖示（主色）在卡片底上要清楚');
     const checks = [
       ['標題上的小字', blend(P['bar-ink'], P.bar, topbar), P.bar],
-      ['分頁小字', blend(P['bar-ink'], P.bar, tab), P.bar],
-      ['選取分頁小字', blend(P['on-highlight'], P.highlight, tabOn), P.highlight],
+      ['分段按鈕選取', P['on-highlight'], P.highlight],
+      ['結果大字（主色）', P.accent, P.surface],
     ];
     for (const [label, fg, bg] of checks) {
       const c = contrast(fg, bg);

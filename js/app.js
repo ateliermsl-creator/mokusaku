@@ -6,18 +6,13 @@ import { renderLuban, renderLubanSummary } from './luban-ui.js';
 import { renderJointPage } from './joint-ui.js';
 import { JOINTS } from './joints.js';
 import { renderInstall, showInAppBanner, inAppName, isStandalone } from './install-ui.js';
-import {
-  roofSection, hipSection, haitsukePlan, arcFigure, arcConcept, diagFigure, squareCheck, tri345,
-  unitLadder, composition,
-} from './figures.js';
-import {
-  roofFromKobai, roofLengths, haitsukeRafters, kobaiFromAngle, kobaiFromRiseRun,
-  arcFromChordRise, arcFromChordRadius, arcOffsets, diagonal,
-} from './calc.js';
+import { arcFigure, arcConcept, tri345, unitLadder, composition } from './figures.js';
+import { arcFromChordRise, arcFromChordRadius, arcOffsets } from './calc.js';
+import { createCalcUI, CALC_TOOLS } from './calc-ui.js';
 
 const $ = (id) => document.getElementById(id);
 const STORE = 'mokusaku.v1';
-const VERSION = '31'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
+const VERSION = '32'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
 
 /* ---------- 儲存（localStorage 可能被擋，全部包 try） ---------- */
 let state = {};
@@ -30,7 +25,7 @@ const L = (zh, jp) => `${zh}${jp ? ` <i class="jp">${jp}</i>` : ''}`;
 // 長度：mm、台尺（丈尺寸分）為主，日式（間尺寸分）為輔
 const len = (label, mm) => `
   <div class="line"><span class="k">${label}</span>
-  <span class="v">${fmtMm(mm)} mm<small>${toTaiShaku(mm)}（${toShaku(mm)}尺）</small>
+  <span class="v">${fmtMm(mm, calcUI.prefs().dec)} mm<small>${toTaiShaku(mm)}（${toShaku(mm)}尺）</small>
   <small class="jp">日式 ${toKenShaku(mm)}</small></span></div>`;
 const plain = (label, text) => `<div class="line"><span class="k">${label}</span><span class="v">${text}</span></div>`;
 const n = (v, d = 3) => `${+v.toFixed(d)}`;
@@ -46,6 +41,9 @@ function readLen(id, errId) {
     return { error: true };
   }
 }
+
+/* ---------- 木作計算機：選單與各工具（js/calc-ui.js） ---------- */
+const calcUI = createCalcUI({ $, state, save, readLen });
 
 /* ---------- 1. 尺貫混算 ---------- */
 let history = (Array.isArray(state.history) ? state.history : [])
@@ -76,7 +74,7 @@ function renderCalc() {
   $('mix-fig').innerHTML = composition(mm);
   setFour(mm, !!r.partial);
   out.innerHTML = `
-    <div class="mm">${fmtMm(mm)}<small>mm</small></div>
+    <div class="mm">${fmtMm(mm, calcUI.prefs().dec)}<small>mm</small></div>
     <div class="shaku">${toTaiShaku(mm)}</div>
     <div class="shaku2">${toShaku(mm)} 尺　／　${n(mm / 1000, 4)} m</div>
     <div class="shaku2 jp">日式 ${toKenShaku(mm)}</div>`;
@@ -116,6 +114,7 @@ $('calc-save').addEventListener('click', () => {
   if (mm === null || !expr) return;
   history = [{ expr, mm }, ...history.filter((h) => h.expr !== expr)].slice(0, 30);
   state.history = history; save(); renderHistory();
+  calcUI.logAdd({ tool: 'mix', title: '台尺混算', sum: expr, res: `${fmtMm(mm, calcUI.prefs().dec)} mm（${toTaiShaku(mm)}）`, inp: { 'calc-expr': expr } });
 });
 
 // 按鍵面板（台尺混算與魯班尺共用）：pointerdown 時 preventDefault，輸入欄不會失去焦點，也不會跳出手機鍵盤
@@ -198,7 +197,7 @@ applySysKb();
    點長度欄位 → 底部升起和台尺混算同一組按鍵；上方即時顯示算出幾 mm、幾丈幾尺。 */
 const sheetEl = $('sheet');
 let sheetTarget = null;
-const sheetFieldSel = '#tab-roof input.len, #tab-arc input.len, #tab-diag input.len, #page-joint input.len';
+const sheetFieldSel = '#page-calc .panel:not(#tab-mix):not(#tab-luban) input.len, #page-joint input.len';
 const fieldTitle = (el) => { const sp = el.closest('label') && el.closest('label').querySelector('span'); return sp ? sp.textContent.trim() : '長度'; };
 
 function updateSheetLive() {
@@ -256,97 +255,6 @@ document.addEventListener('pointerdown', (e) => { // 點面板與長度欄位以
 });
 addEventListener('resize', () => { if (sheetTarget) ensureVisible(sheetTarget); });
 
-/* ---------- 2. 屋根・隅木・垂木 ---------- */
-function roofKobai() {
-  const mode = $('roof-mode').value;
-  $('roof-f-kobai').hidden = mode !== 'kobai';
-  $('roof-f-angle').hidden = mode !== 'angle';
-  $('roof-f-rise').hidden = mode !== 'riserun';
-  $('roof-f-run').hidden = mode !== 'riserun';
-  $('roof-err').textContent = '';
-  try {
-    if (mode === 'kobai') {
-      const v = parseFloat($('roof-kobai').value);
-      return Number.isFinite(v) ? v : null;
-    }
-    if (mode === 'angle') {
-      const v = parseFloat($('roof-angle').value);
-      return Number.isFinite(v) ? kobaiFromAngle(v) : null;
-    }
-    const rise = evalLength($('roof-rise').value);
-    const run = evalLength($('roof-run').value);
-    if (rise === null || run === null) return null;
-    return kobaiFromRiseRun(rise, run);
-  } catch (e) {
-    $('roof-err').textContent = e.message;
-    return null;
-  }
-}
-
-function renderRoof() {
-  const xIn = roofKobai();
-  const sample = xIn === null;              // 還沒輸入坡度：畫示意圖
-  const x = sample ? 4.5 : xIn;
-  const r = roofFromKobai(x);
-  const basic = $('roof-basic');
-  const A = readLen('roof-a', 'roof-a-err');
-  const hasA = !sample && A.mm !== undefined && A.mm > 0;
-  const R = hasA ? roofLengths(A.mm, x) : null;
-
-  // 圖：屋頂剖面、角梁（沒有數字時畫示意圖）
-  $('roof-fig').innerHTML = roofSection({
-    x, a: hasA ? A.mm : null, rise: R ? R.rise : null, rafter: R ? R.rafter : null, angleDeg: r.angleDeg, sample });
-  $('hip-fig').innerHTML = hipSection({
-    x, a: hasA ? A.mm : null, planLen: R ? R.hipPlan : null, rise: R ? R.rise : null, hipLen: R ? R.hip : null,
-    hipAngleDeg: r.hip.angleDeg, sample });
-
-  const hBox = $('roof-haitsuke');
-  const hErr = $('roof-h-err');
-  hErr.textContent = '';
-  hBox.innerHTML = '';
-  $('hai-fig').innerHTML = haitsukePlan();   // 預設先畫示意圖，算得出來再換成實際數字
-  if (sample) { basic.innerHTML = ''; $('roof-lengths').innerHTML = ''; return; }
-
-  basic.innerHTML =
-    plain(L('坡度', '寸勾配'), `${n(x, 3)} 寸`) +
-    plain('角度', `${n(r.angleDeg, 3)}°`) +
-    plain(L('椽木斜長 √(10²+勾²)', '垂木・玄'), `${n(r.gen, 4)}`) +
-    plain(L('椽木伸長率（斜長÷10）', '伸び率'), `${n(r.nobi, 5)}`) +
-    plain(L('角梁長弦 √(200+勾²)', '隅木・長玄'), `${n(r.hip.gen, 4)}`) +
-    plain(L('角梁伸長率（長弦÷10）', '隅木 伸び率'), `${n(r.hip.nobi, 5)}`) +
-    plain(L('角梁坡度（勾÷√2）', '隅木 勾配'), `${n(r.hip.kobai, 4)} 寸`) +
-    plain(L('角梁角度', '隅木'), `${n(r.hip.angleDeg, 3)}°`);
-
-  // 長さ
-  const lenBox = $('roof-lengths');
-  if (R) {
-    lenBox.innerHTML =
-      len('單邊水平長 a', A.mm) + len(L('椽木實長', '垂木'), R.rafter) + len(L('立上高', '立上り'), R.rise) +
-      len(L('角梁平面長（a√2）', '隅木'), R.hipPlan) + len(L('角梁實長', '隅木'), R.hip);
-  } else {
-    lenBox.innerHTML = '';
-    if (A.mm !== undefined && A.mm <= 0) $('roof-a-err').textContent = '水平長要大於 0';
-  }
-
-  // 配付垂木
-  const P = readLen('roof-pitch', null);
-  const F = readLen('roof-first', null);
-  if (P.error || F.error) { hErr.textContent = '椽木間距或第一支椽木水平長的算式有誤'; return; }
-  const first = F.mm !== undefined ? F.mm : A.mm;
-  if (P.mm !== undefined && first !== undefined) {
-    try {
-      const h = haitsukeRafters(first, P.mm, x);
-      const rows = h.rows.map((row) => `
-        <tr><td>${row.n}</td>
-        <td>${fmtMm(row.run)}<small>${toTaiShaku(row.run)}</small></td>
-        <td>${fmtMm(row.real)}<small>${toTaiShaku(row.real)}</small></td></tr>`).join('');
-      hBox.innerHTML = len(L('每支遞減量（實長）', '減り'), h.decrement) +
-        `<table><thead><tr><th>支</th><th>水平長 mm</th><th>實長 mm</th></tr></thead><tbody>${rows}</tbody></table>`;
-      $('hai-fig').innerHTML = haitsukePlan({ first, pitch: P.mm, decrement: h.decrement, count: h.rows.length });
-    } catch (e) { hErr.textContent = e.message; }
-  }
-}
-
 /* ---------- 3. R・弧 ---------- */
 function renderArc() {
   const mode = $('arc-mode').value;
@@ -375,36 +283,6 @@ function renderArc() {
         <table><thead><tr><th>點</th><th>從左端 mm</th><th>弧高 mm</th></tr></thead><tbody>${rows}</tbody></table></div>`;
     }
   } catch (e) { err.textContent = e.message; }
-}
-
-/* ---------- 4. 對角線 ---------- */
-function renderDiag() {
-  const A = readLen('diag-a', null), B = readLen('diag-b', null);
-  const out = $('diag-out'), err = $('diag-err');
-  out.innerHTML = ''; err.textContent = '';
-  let figArgs = {};
-  if (A.error || B.error) err.textContent = '算式有誤，請檢查輸入';
-  else if (A.mm !== undefined && B.mm !== undefined) {
-    try {
-      const d = diagonal(A.mm, B.mm);
-      out.innerHTML = len('對角線', d);
-      figArgs = { a: Math.min(A.mm, B.mm), b: Math.max(A.mm, B.mm), d };
-    } catch (e) { err.textContent = e.message; }
-  }
-  $('diag-fig').innerHTML = diagFigure(figArgs);
-
-  const D1 = readLen('diag-d1', null), D2 = readLen('diag-d2', null);
-  const chk = $('diag-chk'), cerr = $('diag-chk-err');
-  chk.innerHTML = ''; cerr.textContent = '';
-  let sq = {};
-  if (D1.error || D2.error) cerr.textContent = '算式有誤，請檢查輸入';
-  else if (D1.mm !== undefined && D2.mm !== undefined) {
-    const d = D1.mm - D2.mm;
-    chk.innerHTML = len('差（① − ②）', d) +
-      plain('判定', Math.abs(d) < 0.5 ? '兩條一致 ✓' : (d > 0 ? '① 較長' : '② 較長'));
-    sq = { d1: D1.mm, d2: D2.mm };
-  }
-  $('sq-fig').innerHTML = squareCheck(sq);
 }
 
 /* ---------- 5. 魯班尺 ---------- */
@@ -450,14 +328,20 @@ $('arc-concept').innerHTML = arcConcept();
     delete inp[key];
     changed = true;
   }
+  // v32：屋頂坡度分頁拆成「勾股玄」與「角梁・谷木」，把舊欄位的值帶過去
+  for (const [from, to] of [['roof-kobai', 'ko-n'], ['roof-a', 'ko-den'], ['roof-pitch', 'su-p'], ['roof-first', 'su-first']]) {
+    if (typeof inp[from] === 'string' && inp[from] && !inp[to]) { inp[to] = inp[from]; if (to === 'ko-n') inp['su-n'] = inp['su-n'] || inp[from]; if (to === 'ko-den') inp['su-den'] = inp['su-den'] || inp[from]; changed = true; }
+  }
   if (changed) save();
 })();
 
 /* ---------- 輸入欄位共通：還原 / 儲存 / 更新 ---------- */
 const renderers = {
-  'tab-mix': renderCalc, 'tab-roof': renderRoof, 'tab-arc': renderArc, 'tab-diag': renderDiag, 'tab-luban': renderLubanTab,
+  'tab-mix': renderCalc, 'tab-arc': renderArc, 'tab-luban': renderLubanTab,
+  ...calcUI.renderers,
   'page-joint': () => renderJointPage({ $, state, save, readLen }),
 };
+calcUI.init();
 document.querySelectorAll('main input, main select').forEach((el) => {
   if (el.classList.contains('nopersist')) return; // 搜尋框、新增詞條表單不存草稿
   if (state.inputs && el.id in state.inputs) el.value = state.inputs[el.id];
@@ -473,9 +357,10 @@ document.querySelectorAll('main input, main select').forEach((el) => {
 /* ---------- 路由 ----------
    #/ 首頁　#/install 安裝教學
    #/joint[/oikake|kama|koshikake] 仕口・継手 比例速查
-   #/calc[/mix|roof|arc|diag] 木作計算機（四個分頁；沒寫分頁就開上次用的）
+   #/calc 木作計算機選單；#/calc/<工具> 各工具（見 js/calc-ui.js 的 CALC_TOOLS）（四個分頁；沒寫分頁就開上次用的）
    舊網址 #/roof #/arc #/diag 會自動導到 #/calc/… */
-const CALC_TABS = { mix: '台尺混算', roof: '屋頂坡度', arc: '弧線半徑', diag: '對角線', luban: '魯班尺' };
+const CALC_TABS = CALC_TOOLS;
+const CALC_ALIAS = { roof: 'kouko' };   // 舊網址：屋頂坡度分頁已拆成勾股玄、角梁・谷木
 const PAGES = ['home', 'install', 'calc', 'glossary', 'joint'];
 const glossary = createGlossaryUI({ state, save });
 const LEGACY = ['roof', 'arc', 'diag'];
@@ -488,27 +373,24 @@ function route() {
   if (!PAGES.includes(page)) page = 'home';
   const isCalc = page === 'calc';
   if (isCalc) {
-    if (!(sub in CALC_TABS)) sub = state.calcTab in CALC_TABS ? state.calcTab : 'mix';
-    if (state.calcTab !== sub) { state.calcTab = sub; save(); }
+    if (sub in CALC_ALIAS) { location.replace(`#/calc/${CALC_ALIAS[sub]}`); return; }
+    if (!(sub in CALC_TABS)) sub = 'menu';
   }
 
   document.querySelectorAll('main > section').forEach((sec) => { sec.hidden = sec.id !== `page-${page}`; });
   if (isCalc) document.querySelectorAll('#page-calc > .panel').forEach((p) => { p.hidden = p.id !== `tab-${sub}`; });
-  document.querySelectorAll('#subtabs a').forEach((a) => {
-    if (a.dataset.sub === sub && isCalc) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
-  });
 
   if (page === 'joint' && JOINTS.some((j) => j.id === sub)) { state.jointId = sub; save(); }   // 網址上的值要在已知清單內才存
-  const title = isCalc ? '木作計算機'
+  const title = isCalc ? CALC_TABS[sub]
     : page === 'install' ? '加到手機桌面'
       : page === 'joint' ? '仕口・継手 比例速查'
       : page === 'glossary' ? '台日大木作名詞＆構架對照庫' : '柴柴木作';
   $('topbar').hidden = page === 'home';
-  $('subtabs').hidden = !isCalc;
+  $('backBtn').hidden = !(isCalc && sub !== 'menu');
   $('topTitle').textContent = title;
-  $('topJp').textContent = isCalc ? '電卓' : '';
+  $('topJp').textContent = isCalc && sub === 'menu' ? '電卓' : '';
   document.title = page === 'home' ? '柴柴木作｜日式大木作工具箱'
-    : `${isCalc ? CALC_TABS[sub] : title}｜柴柴木作`;
+    : `${title}｜柴柴木作`;
 
   closeSheet();
   if (isCalc) renderers[`tab-${sub}`]();

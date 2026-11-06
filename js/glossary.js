@@ -201,7 +201,9 @@ const RAW = [
 
 // ───── 四維補充：現場行話、同名異義警示、與計算機的連結 ─────
 // 「現場行話」（台語音、日語外來語）為資料提供者所述，尚未逐項查證，介面上會標註。
-const CALC_ROOF = { label: '前往屋頂坡度計算', href: '#/calc/roof' };
+const CALC_ROOF = { label: '前往勾股玄（椽木）計算', href: '#/calc/kouko' };
+const CALC_SUMI = { label: '前往角梁・谷木計算', href: '#/calc/sumi' };
+const CALC_SLOPE = { label: '前往坡度換算', href: '#/calc/slope' };
 const CALC_MIX = { label: '前往台尺混算', href: '#/calc/mix' };
 const JOINT_SOON = { label: '比例速查圖（尚無可查證的比例）', disabled: true };
 
@@ -216,8 +218,8 @@ const WARN_TSUGITE = '⚠️ 概念分法不同：日式嚴格區分「継手」
 // key = 「分類|日文」
 const EXTRA = {
   '屋架・屋頂|垂木': { slang: ['タルキ（Taruki，日語外來語）', '桷仔（Kak-á，台語）'], links: [CALC_ROOF] },
-  '屋架・屋頂|隅木': { slang: ['スミ木（Sumi-gi，日語外來語）'], links: [CALC_ROOF] },
-  '屋架・屋頂|勾配': { links: [CALC_ROOF] },
+  '屋架・屋頂|隅木': { slang: ['スミ木（Sumi-gi，日語外來語）'], links: [CALC_SUMI] },
+  '屋架・屋頂|勾配': { links: [CALC_SLOPE] },
   '屋架・屋頂|野地板': { slang: ['望板（Bāng-pán，台語）'] },
   '屋架・屋頂|小屋束': { slang: ['瓜筒（Kue-tâng，台語）'], warn: WARN_TSUKA },
   '屋架・屋頂|切妻': { warn: WARN_KIRIZUMA },
