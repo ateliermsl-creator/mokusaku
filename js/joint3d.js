@@ -41,9 +41,15 @@ export function createViewer(host, id, D) {
       const g = new THREE.Group();
       for (const pc of mem.pieces) {
         const shape = new THREE.Shape(pc.poly.map(([x, y]) => new THREE.Vector2(x, y)));
-        const geo = new THREE.ExtrudeGeometry(shape, { depth: pc.y1 - pc.y0, bevelEnabled: false });
-        geo.rotateX(-Math.PI / 2);            // 平面 y → −Z，拉伸方向 → 向上（Y）
-        geo.translate(0, pc.y0, 0);
+        let geo;
+        if (pc.axis === 'elev') {             // 側面外形 (x, 高度)：沿材寬（Z）拉伸
+          geo = new THREE.ExtrudeGeometry(shape, { depth: Dmm, bevelEnabled: false });
+          geo.translate(0, 0, -Dmm / 2);
+        } else {
+          geo = new THREE.ExtrudeGeometry(shape, { depth: pc.y1 - pc.y0, bevelEnabled: false });
+          geo.rotateX(-Math.PI / 2);          // 平面 y → −Z，拉伸方向 → 向上（Y）
+          geo.translate(0, pc.y0, 0);
+        }
         const mesh = new THREE.Mesh(geo, mat(COL[mem.color]));
         mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo, 20), edgeMat));
         g.add(mesh);
@@ -58,10 +64,10 @@ export function createViewer(host, id, D) {
       memberObjs[hl.member].add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), holeMat));
     }
     const pinMeshes = m.pins.map((p) => {
-      const geo = new THREE.BoxGeometry(p.size, p.size, Dmm * 1.08);
+      const geo = new THREE.BoxGeometry(p.size, p.sy ?? p.size, p.key ? Dmm : Dmm * 1.08);
       const mesh = new THREE.Mesh(geo, mat(COL.pin));
       mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), edgeMat));
-      mesh.position.set(p.x, Dmm / 2, 0);
+      mesh.position.set(p.x, p.hy ?? Dmm / 2, 0);
       return mesh;
     });
     for (const pm of pinMeshes) group.add(pm);

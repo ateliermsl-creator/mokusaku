@@ -523,3 +523,12 @@ a.chip { display: inline-flex; align-items: center; text-decoration: none; }
 .kbswitch { margin: 18px 0 0; font-size: 12.5px; color: var(--muted); }
 .linkbtn { padding: 4px 2px; font: inherit; color: var(--accent-2); background: none; border: 0; text-decoration: underline; cursor: pointer; }
 
+
+/* 仕口・継手：施工步驟、案例、其他接頭 */
+.jt-steps { margin: 4px 0 8px; padding-left: 22px; font-size: 14px; line-height: 1.7; color: var(--ink); }
+.jt-steps li { margin-bottom: 4px; }
+.jt-more { margin-top: 14px; }
+.jt-ref { margin: 8px 0 12px; }
+.jt-ref b { font-size: 14px; }
+.jt-ref p { margin: 2px 0 0; font-size: 13px; line-height: 1.65; color: var(--muted); }
+#jt-chips { flex-wrap: wrap; overflow-x: visible; }

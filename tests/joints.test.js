@@ -33,7 +33,7 @@ test('頭端寬 ＝ 頸寬 ＋ 兩側加寬（鎌継ぎ、腰掛蟻継ぎ）', (
 });
 
 test('每個継手都對應詞庫的已查證詞條，台灣用語與文獻一致', () => {
-  const tw = { oikake: '犁壁榫', kama: '蛇頭榫', koshikake: '燕尾榫' };
+  const tw = { oikake: '犁壁榫', kama: '蛇頭榫', koshikake: '燕尾榫', kanawa: '金輪繼榫接' };
   for (const j of JOINTS) {
     const t = TERMS.find((x) => x.cat === j.ref[0] && x.ja === j.ref[1]);
     assert.ok(t, `${j.id}: 找不到詞條`);

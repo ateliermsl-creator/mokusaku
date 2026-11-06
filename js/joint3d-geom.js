@@ -8,6 +8,7 @@
 //
 // 依據：《古蹟木作修復技術》V-2 圖 17(a) 的平面、側面圖（尺寸與比例見 joints.js）。
 // 文獻沒有標數字、由圖面目測的：界線上的小斜度與段差（SLOPE / STEP）、栓的位置（±3/4 D）。
+import { KANAWA } from './joints.js';
 export const E = 0.125;          // 兩端各留（× D）
 export const SPAN = 3;           // 継手全長 3 D（文獻 3～3.5 D）
 export const PIN_AT = 0.75;      // 栓位置：全長中點左右各 0.75 D（目測）
@@ -95,9 +96,31 @@ function halfTongue(D, { neckLen, headLen, wNeck, wHead, ext = 1 }) {
   };
 }
 
+/**
+ * 金輪継ぎ（實驗木場施工圖，材 135）：外形畫在側面（高度方向），沿材寬整段拉伸；
+ * 中央的込み栓沿材寬打入（拆開時往側面抽出）。座標 (x, h)：h ＝ 從材底量起的高度。
+ * 兩材與込み栓三者剛好拼滿（込み栓的孔一半在下材、一半在上材）。
+ */
+function kanawaGeneric(D, ext = 1) {
+  const { e, lx, k, s1, s2 } = KANAWA;
+  const E = e * D, L = lx * D, K = k * D, S1 = s1 * D, S2 = s2 * D, H = D / 2, X = ext * D, xm = L / 2 - K / 2;
+  const toH = (pts) => pts.map(([x, v]) => [x, H - v]);     // v：自中心線往下為正（同施工圖）
+  const A = toH([[-X, -H], [E, -H], [E, -E], [0, -E], [0, 0], [E, 0], [xm, S1], [xm + K, S1], [xm + K, -S2], [L, 0], [L, E], [L - E, E], [L - E, H], [-X, H]]);
+  const B = toH([[E, -H], [L + X, -H], [L + X, H], [L - E, H], [L - E, E], [L, E], [L, 0], [xm + K, -S2], [xm, -S2], [xm, S1], [E, 0], [0, 0], [0, -E], [E, -E]]);
+  return {
+    D, cx: L / 2, explodeDx: L * 0.62, pinDz: D * 1.35, x0: -X, x1: L + X, holes: [],
+    pins: [{ x: xm + K / 2, size: K, sy: S1 + S2, hy: H - (S1 - S2) / 2, key: true }],
+    members: [
+      { name: '下材', color: 'a', pieces: [{ poly: A, y0: 0, y1: D, axis: 'elev' }] },
+      { name: '上材', color: 'b', pieces: [{ poly: B, y0: 0, y1: D, axis: 'elev' }] },
+    ],
+  };
+}
+
 export function jointModel(id, D, { ext = 1 } = {}) {
   if (!(D > 0) || !Number.isFinite(D)) throw new Error('材成要大於 0');
   if (id === 'oikake') return oikakeGeneric(D);
+  if (id === 'kanawa') return kanawaGeneric(D, ext);
   if (id === 'kama') return halfTongue(D, { neckLen: 0.625 * D, headLen: 0.625 * D, wNeck: 0.25 * D, wHead: 0.375 * D, ext });
   if (id === 'koshikake') return halfTongue(D, { neckLen: 0, headLen: 0.5 * D, wNeck: 0.25 * D, wHead: 0.375 * D, ext });
   throw new Error(`沒有這個継手：${id}`);

@@ -39,12 +39,15 @@ test('栓在兩材重疊的範圍內，並與兩端對稱', () => {
 
 import { jointModel, inPoly } from '../js/joint3d-geom.js';
 
-const IDS = ['oikake', 'kama', 'koshikake'];
+const IDS = ['oikake', 'kama', 'koshikake', 'kanawa'];
 // 某一層高度 y、平面點 (x, py)：落在哪些材裡（k＝拆開程度 0～1）
 const hit = (m, k, y, x, py) => m.members.filter((mem, i) => {
   const dx = (i === 0 ? -1 : 1) * k * m.explodeDx;
-  return mem.pieces.some((pc) => y > pc.y0 && y < pc.y1 && inPoly([x - dx, py], pc.poly));
-}).length;
+  return mem.pieces.some((pc) => (pc.axis === 'elev'
+    ? Math.abs(py) < m.D / 2 && inPoly([x - dx, y], pc.poly)          // 側面外形：沿材寬整段
+    : y > pc.y0 && y < pc.y1 && inPoly([x - dx, py], pc.poly)));
+}).length + m.pins.filter((p) => p.key && Math.abs(x - p.x) < p.size / 2 && Math.abs(y - p.hy) < p.sy / 2
+  && Math.abs(py - k * m.pinDz) < m.D / 2).length;                      // 込み栓也算一塊（拆開時沿材寬抽出）
 
 test('各継手：合起來時每一層、每個點都剛好屬於一根材（不重疊、沒有縫）', () => {
   for (const id of IDS) for (const D of [120, 90.9]) {
@@ -87,4 +90,16 @@ test('鎌継ぎ、腰掛蟻継ぎ：榫頭平面尺寸與文獻一致（材成 1
   assert.equal(Math.max(...t2.filter((p) => p[0] > 15).map((p) => p[1])), 22.5);
   assert.ok(t2.some(([x, y]) => x === 15 && y === -15));                     // 頸寬 30
   assert.equal(a.members[1].pieces[1].poly[0][0], 0);                        // 母材下半從 xA=0 起（多伸出 15 當腰掛）
+});
+
+test('金輪継ぎ：尺寸與實驗木場施工圖一致（材 135：全長 390、中點 195），込み栓在中央', () => {
+  const m = jointModel('kanawa', 135);
+  const xs = m.members[0].pieces[0].poly.map((p) => p[0]);
+  assert.ok(xs.some((x) => Math.abs(x - 15) < 1e-9), '兩端段差 15（≈1/9 D）');
+  assert.ok(Math.abs(m.cx - 195) < 1e-9, '中點 195');
+  assert.ok(xs.some((x) => Math.abs(x - 390) < 1e-9), '全長 390');
+  const key = m.pins[0];
+  assert.ok(key.key && Math.abs(key.x - 195) < 1e-9, '込み栓在中點');
+  assert.ok(Math.abs(key.size - 135 / 8) < 1e-9);
+  assert.equal(m.members[0].pieces[0].axis, 'elev');
 });
