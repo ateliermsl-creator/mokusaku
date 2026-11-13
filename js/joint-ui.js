@@ -83,9 +83,9 @@ export function renderJointPage({ $, state, save, readLen }) {
 
   const r = readLen('jt-d', 'jt-err');
   const defD = j.defD || DEFAULT_D;
-  let D = defD, usingDefault = true;
+  let D = defD, usingDefault = true, bad = !!r.error;
   if (r.error) { /* 錯誤訊息已顯示，沿用預設值畫圖 */ } else if (r.mm !== undefined) {
-    if (r.mm > 0) { D = r.mm; usingDefault = false; } else $('jt-err').textContent = '材成要大於 0';
+    if (r.mm > 0) { D = r.mm; usingDefault = false; } else { $('jt-err').textContent = '材成要大於 0'; bad = true; }
   }
 
   $('jt-fig').innerHTML = jointFigure(id, D);
@@ -95,8 +95,9 @@ export function renderJointPage({ $, state, save, readLen }) {
   const spec = jointSpec(id, D);
   const tbl = $('jt-table');
   tbl.textContent = '';
+  tbl.classList.toggle('demo', bad);   // 輸入有誤：表格變淡，標明是示範值，免得誤讀成自己的尺寸
   tbl.append(
-    h('thead', {}, h('tr', {}, h('th', {}), h('th', { text: '部位' }), h('th', { text: '比例' }), h('th', { text: `尺寸（D＝${fmtMm(D, 1)} mm）` }))),
+    h('thead', {}, h('tr', {}, h('th', {}), h('th', { text: '部位' }), h('th', { text: '比例' }), h('th', { text: bad ? `示範值（D＝${fmtMm(D, 1)} mm，不是你輸入的）` : `尺寸（D＝${fmtMm(D, 1)} mm）` }))),
     h('tbody', {}, spec.map((p) => h('tr', {},
       h('td', { class: 'n', text: '①②③④⑤⑥⑦'[p.n - 1] }),
       h('td', { text: p.label }),
@@ -107,7 +108,9 @@ export function renderJointPage({ $, state, save, readLen }) {
   notes.textContent = '';
   const isCase = !!j.defD;
   notes.append(
-    h('p', { class: 'jt-src', text: usingDefault
+    h('p', { class: bad ? 'warn' : 'jt-src', text: bad
+      ? `⚠ 材成輸入有誤，上面的圖和表是用 ${fmtMm(D, 1)} mm 畫的示範值，不是你的尺寸。請修正材成。`
+      : usingDefault
       ? `目前用${isCase ? '施工圖的材' : '文獻圖例的材成'} ${defD} mm 示範；輸入你的材成，尺寸會依比例換算。`
       : `尺寸＝比例 × 材成，是依${isCase ? '施工案例的尺寸' : '文獻圖面括號內的比例'}換算，不是文獻明文規定的尺寸。` }),
     ...j.notes.map((t) => h('p', { class: 'jt-src', text: `・${t}` })));

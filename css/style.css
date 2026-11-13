@@ -6,7 +6,7 @@
   --surface: #fbfaf5;
   --surface-2: #ebe8d6;
   --ink: #2b2523;
-  --muted: #625853;
+  --muted: #50474a;       /* v40 調深：戶外比較看得清楚 */
   --line: #d6d2bb;
   --accent: #6f544d;      /* 玫瑰褐調暗：主色（按鈕、重點文字） */
   --accent-ink: #ffffff;
@@ -24,7 +24,7 @@
   --lb-good: #c0392b; --lb-bad: #3a3a3a;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.outdoor) {
     --bg: #1d1a1a;
     --surface: #272322;
     --surface-2: #322d2c;
@@ -182,7 +182,7 @@ td small { display: block; color: var(--accent); font-size: 12px; }
 }
 .hint a { color: inherit; font-weight: 700; }
 .hint button { min-height: 34px; margin-left: 8px; padding: 0 12px; font: inherit; font-size: 14px; border: 0; border-radius: 10px; background: rgba(0, 0, 0, .08); color: inherit; }
-@media (prefers-color-scheme: dark) { .hint { background: #3a3230; color: #e6d6cf; } }
+@media (prefers-color-scheme: dark) { html:not(.outdoor) .hint { background: #3a3230; color: #e6d6cf; } }
 
 
 /* 日文輔助字：台灣用語為主，日文放旁邊用小字 */
@@ -217,8 +217,8 @@ input[type="search"] { -webkit-appearance: none; appearance: none; }
 .conf-q { color: #7a5200; background: #fff3cd; border-color: #ecd98c; }
 .conf-u { color: var(--accent); background: transparent; border-color: var(--accent); }
 @media (prefers-color-scheme: dark) {
-  .conf-v { color: #8fe0a5; background: #17331f; border-color: #2d5a3a; }
-  .conf-q { color: #ffd98a; background: #3f3210; border-color: #6b551a; }
+  html:not(.outdoor) .conf-v { color: #8fe0a5; background: #17331f; border-color: #2d5a3a; }
+  html:not(.outdoor) .conf-q { color: #ffd98a; background: #3f3210; border-color: #6b551a; }
 }
 .term .cat { font-size: 12px; color: var(--muted); }
 .dim { display: grid; grid-template-columns: 5.2em 1fr; gap: 8px; padding: 6px 0; border-top: 1px dashed var(--line); }
@@ -230,7 +230,7 @@ input[type="search"] { -webkit-appearance: none; appearance: none; }
 .dv .sl { font-size: 14px; }
 .dv .nt { font-size: 14px; color: var(--ink); }
 .warn { margin: 8px 0 4px; padding: 10px 12px; font-size: 14px; line-height: 1.55; color: #7a2e00; background: #fff0e0; border-left: 4px solid #e07b00; border-radius: 8px; }
-@media (prefers-color-scheme: dark) { .warn { color: #ffcf9e; background: #3b2610; border-left-color: #f2a65a; } }
+@media (prefers-color-scheme: dark) { html:not(.outdoor) .warn { color: #ffcf9e; background: #3b2610; border-left-color: #f2a65a; } }
 .acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .btnlink { display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; font: inherit; font-size: 14px; font-weight: 600; text-decoration: none; color: var(--accent-ink); background: var(--accent); border: 1px solid var(--accent); border-radius: 10px; }
 .btnlink.ghost { color: var(--accent); background: transparent; }
@@ -287,7 +287,7 @@ input[type="search"] { -webkit-appearance: none; appearance: none; }
 .fig .t3 { font-size: 9px; fill: var(--muted); }
 .fig text.good { fill: #1d7a3a; font-weight: 600; }
 .fig text.bad { fill: #c0392b; font-weight: 600; }
-@media (prefers-color-scheme: dark) { .fig text.good { fill: #8fe0a5; } .fig text.bad { fill: #ff9a8e; } }
+@media (prefers-color-scheme: dark) { html:not(.outdoor) .fig text.good { fill: #8fe0a5; } html:not(.outdoor) .fig text.bad { fill: #ff9a8e; } }
 .fig .seg { stroke: none; }
 .fig .seg0 { fill: var(--s0); } .fig .seg1 { fill: var(--s1); } .fig .seg2 { fill: var(--s2); } .fig .seg3 { fill: var(--s3); }
 .fig .lb-good { fill: var(--lb-good); stroke: var(--surface); stroke-width: 1; }
@@ -320,7 +320,7 @@ input[type="search"] { -webkit-appearance: none; appearance: none; }
 .lb-fig .figbox { margin: 4px 0; padding: 0; border: 0; background: none; }
 .lb-msg { margin: 2px 0 6px; font-size: 14px; }
 .lb-good { color: #1d7a3a; } .lb-edge { color: #a86a00; } .lb-bad { color: #c0392b; }
-@media (prefers-color-scheme: dark) { .lb-good { color: #8fe0a5; } .lb-edge { color: #ffd98a; } .lb-bad { color: #ff9a8e; } }
+@media (prefers-color-scheme: dark) { html:not(.outdoor) .lb-good { color: #8fe0a5; } html:not(.outdoor) .lb-edge { color: #ffd98a; } html:not(.outdoor) .lb-bad { color: #ff9a8e; } }
 .lb-sug { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
 .lb-sug .btnlink { justify-content: center; min-height: 42px; text-align: center; }
 .lb-use { margin: 0 0 4px; font-size: 12px; color: var(--muted); }
@@ -364,7 +364,7 @@ input[type="search"] { -webkit-appearance: none; appearance: none; }
 .lb-line { display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px dashed var(--line); font-size: 15px; }
 .lb-line b { font-size: 16px; }
 .lb-line.lb-good b { color: #1d7a3a; } .lb-line.lb-edge b { color: #a86a00; } .lb-line.lb-bad b { color: #c0392b; }
-@media (prefers-color-scheme: dark) { .lb-line.lb-good b { color: #8fe0a5; } .lb-line.lb-edge b { color: #ffd98a; } .lb-line.lb-bad b { color: #ff9a8e; } }
+@media (prefers-color-scheme: dark) { html:not(.outdoor) .lb-line.lb-good b { color: #8fe0a5; } html:not(.outdoor) .lb-line.lb-edge b { color: #ffd98a; } html:not(.outdoor) .lb-line.lb-bad b { color: #ff9a8e; } }
 .fsec.lb { padding: 10px 14px 8px; border-top: 1px solid var(--line); }
 .fsec.lb h3 { margin-top: 10px; }
 .lb-spanbar { margin: 4px 0 8px; font-size: 14px; color: var(--muted); }
@@ -426,7 +426,7 @@ a.chip { display: inline-flex; align-items: center; text-decoration: none; }
 .note-warn, #iab { background: #fff0e0; border: 1px solid #e0b27a; color: #7a2e00; }
 #iab { margin: 12px 16px; }
 #iab[hidden] { display: none; }
-@media (prefers-color-scheme: dark) { .note-warn, #iab { background: #3b2610; border-color: #8a5a2b; color: #ffcf9e; } }
+@media (prefers-color-scheme: dark) { html:not(.outdoor) .note-warn, html:not(.outdoor) #iab { background: #3b2610; border-color: #8a5a2b; color: #ffcf9e; } }
 .sec { min-height: 36px; margin-top: 6px; padding: 0 12px; font: inherit; font-size: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); }
 #instNow { min-height: 46px; font: inherit; font-size: 16px; font-weight: 700; border: 0; border-radius: 12px; background: var(--accent); color: var(--accent-ink); }
 
@@ -559,11 +559,87 @@ a.chip { display: inline-flex; align-items: center; text-decoration: none; }
 .ex-res.right { color: #1d6b33; }
 .ex-res.wrong { color: #8a1c1c; }
 @media (prefers-color-scheme: dark) {
-  .ex-opt.right { color: #8fe0a5; background: #17331f; border-color: #2d5a3a; }
-  .ex-opt.wrong { color: #ffb3b3; background: #3a1616; border-color: #6b2a2a; }
-  .ex-res.right { color: #8fe0a5; }
-  .ex-res.wrong { color: #ffb3b3; }
+  html:not(.outdoor) .ex-opt.right { color: #8fe0a5; background: #17331f; border-color: #2d5a3a; }
+  html:not(.outdoor) .ex-opt.wrong { color: #ffb3b3; background: #3a1616; border-color: #6b2a2a; }
+  html:not(.outdoor) .ex-res.right { color: #8fe0a5; }
+  html:not(.outdoor) .ex-res.wrong { color: #ffb3b3; }
 }
 .ex-exp { margin: 4px 0; font-size: 14px; }
 .ex-score { margin: 4px 0; font-size: 34px; font-weight: 700; text-align: center; color: var(--accent); }
 .ex-list { margin: 4px 0 0; padding-left: 1.3em; font-size: 15px; line-height: 1.65; }
+
+/* ═════════ 易用性（v40）：工地戴手套、單手、大太陽下 ═════════
+   1. 能點的東西最小 48px（約 1.3 cm）
+   2. 小字放大：說明 14px、圖上最小 12px
+   3. 「下一題」固定在畫面下方
+   4. 戶外模式（html.outdoor）：一律淺色、文字純黑、框線加粗、字再大一級 */
+.chip, .btnlink, .sec, .sheet-done, .hint button { min-height: 48px; }
+.hint a { display: inline-flex; align-items: center; min-height: 48px; padding: 0 6px; }
+.hint button { background: rgba(0, 0, 0, .14); font-weight: 600; }
+.linkbtn { display: inline-flex; align-items: center; min-height: 48px; padding: 0 8px; }
+details > summary { padding: 12px 0; }
+.jt-src a, .jt-ref a, .ex-go { display: inline-flex; align-items: center; min-height: 48px; }
+.sheet .keypad .k { min-height: 48px; }
+.tblcard tbody tr { height: 48px; }
+.sheet-done { padding: 0 22px; font-size: 16px; }
+button.tool { width: calc(100% - 24px); font: inherit; text-align: left; cursor: pointer; }
+button.tool[aria-pressed="true"] { border: 2px solid var(--accent); }
+
+.note, .field > span, .hint-line, .figbox figcaption, .cnote, .jt-ref p, .fx, .dir-hint { font-size: 14px; }
+.kbswitch, .jt-src, .cite, .lgh small, .lgs { font-size: 14px; }
+.conf, .term .cat, .dl, th, .tblcard th, .jt-table thead th, .fsec h3 small, .lb-head small, .lb-use, .fv small, .jt-table td small { font-size: 13px; }
+.irow .il .jp, .tblcard td small, .rrow .rsub, .rrow .rv small { font-size: 12.5px; }
+.fig text { font-size: 12px; }
+.fig .t2 { font-size: 12px; }
+.fig .t3 { font-size: 11px; }
+.fig .lbls text { font-size: 11.5px; }
+
+/* 沒寫單位的提醒、輸入有誤時的示範值 */
+.unit-hint { margin: 0 14px 8px; padding: 6px 10px; font-size: 14px; line-height: 1.5; color: #6b3d00; background: #fff0d6; border-radius: 8px; }
+.icard > .unit-hint { margin: 0 12px 10px; }
+.jt-table.demo { opacity: .45; }
+
+/* 底部面板：最近用過的值（固定高度，面板才不會跳） */
+.sheet-recent { display: flex; align-items: center; gap: 6px; height: 48px; margin: 0 0 6px; overflow-x: auto; scrollbar-width: none; }
+.sheet-recent::-webkit-scrollbar { display: none; }
+.sheet-recent .rc-lbl, .sheet-recent .rc-empty { flex: none; font-size: 13px; color: var(--muted); }
+.sheet-recent .rc { flex: none; min-height: 44px; padding: 0 14px; font: inherit; font-size: 16px; font-weight: 600; color: var(--accent); background: var(--surface); border: 1px solid var(--accent); border-radius: 999px; touch-action: manipulation; }
+
+/* 匠師備考：下一題固定在下方 */
+.ex-nextbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 8; max-width: 640px; margin: 0 auto;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: var(--bg); border-top: 1px solid var(--line); }
+.ex-next { width: 100%; min-height: 56px; font: inherit; font-size: 18px; font-weight: 700; color: var(--accent-ink); background: var(--accent); border: 0; border-radius: 14px; }
+#page-exam:has(.ex-nextbar) { padding-bottom: 96px; }
+.ex-q .cite { margin-bottom: 4px; }
+
+@media (prefers-color-scheme: dark) {
+  html:not(.outdoor) .unit-hint { color: #ffcf9e; background: #3b2610; }
+}
+
+/* ── 戶外模式 ── */
+:root.outdoor {
+  --bg: #ffffff; --surface: #ffffff; --surface-2: #ececec;
+  --ink: #000000; --muted: #1f1f1f; --line: #6b6b6b;
+  --accent: #4a2f28; --accent-ink: #ffffff; --accent-2: #1f2d3a;
+  --highlight: #4a2f28; --on-highlight: #ffffff;
+  --err: #a00000; --bar: #1f2a33; --bar-ink: #ffffff;
+  --fig-line: #3a241f; --fig-fill: rgba(58, 36, 31, .12);
+  --hero: #f2f2f2; --hero-line: #6b6b6b;
+  --s0: #4a2f28; --s1: #1f2d3a; --s2: #7a5a50; --s3: #4f5a64;
+  --lb-good: #a00000; --lb-bad: #000000;
+  color-scheme: light;
+}
+.outdoor body { font-size: 17px; }
+.outdoor .note, .outdoor .field > span, .outdoor .hint-line, .outdoor .figbox figcaption, .outdoor .kbswitch, .outdoor .jt-src, .outdoor .cite, .outdoor .unit-hint,
+.outdoor .tool small, .outdoor .jt-ref p, .outdoor .cnote, .outdoor .fx { font-size: 16px; }
+.outdoor .conf, .outdoor .term .cat, .outdoor .dl, .outdoor th, .outdoor .jp, .outdoor .irow .il .jp, .outdoor .rrow .rsub, .outdoor .rrow .rv small { font-size: 14px; }
+.outdoor .fig text, .outdoor .fig .t2 { font-size: 13.5px; }
+.outdoor .fig .t3 { font-size: 12px; }
+.outdoor .irow .il { font-size: 17px; font-weight: 600; }
+.outdoor .irow input, .outdoor .field input, .outdoor .field select, .outdoor .chip, .outdoor .keypad .k, .outdoor .icard, .outdoor .rcard, .outdoor .term, .outdoor .tool, .outdoor .card, .outdoor .ex-opt { border-width: 2px; border-color: var(--line); }
+.outdoor .chip[aria-pressed="true"] { border-color: var(--accent); }
+.outdoor .ex-opt.right { border-color: #1d6b33; }
+.outdoor .ex-opt.wrong { border-color: #8a1c1c; }
+.outdoor .irow input::placeholder { color: #555; }
+.outdoor .fig .dim, .outdoor .fig .dm { stroke: #333; }
+.outdoor .seg button:not([aria-selected="true"]), .outdoor .seg2 button:not([aria-pressed="true"]) { color: var(--ink); }

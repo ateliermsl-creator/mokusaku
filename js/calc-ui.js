@@ -482,7 +482,7 @@ export function createCalcUI({ $, state, save, readLen }) {
   /* ═════════════ 設定 ═════════════ */
   function renderSettings() {
     $('st-dec').value = String(prefs.dec); $('st-ang').value = prefs.ang;
-    syncSeg($('st-dec')); syncSeg($('st-ang'));
+    syncSeg($('st-dec')); syncSeg($('st-ang')); syncSeg($('st-out'));
     const box = $('st-log'); box.textContent = '';
     box.append(h('div', { class: 'rrow' }, h('span', { class: 'rk', text: '保存筆數' }), h('span', { class: 'rv' }, h('b', { text: `${log.length} / ${LOG_MAX}` }))));
     box.append(h('button', { type: 'button', class: 'arow danger', text: '刪除全部計算紀錄', onclick: () => {

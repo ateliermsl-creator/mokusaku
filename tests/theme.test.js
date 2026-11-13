@@ -17,7 +17,7 @@ function tokens(block) {
   return out;
 }
 const lightBlock = /:root \{([^}]*)\}/.exec(css)[1];
-const darkBlock = /@media \(prefers-color-scheme: dark\) \{\s*:root \{([^}]*)\}/.exec(css)[1];
+const darkBlock = /@media \(prefers-color-scheme: dark\) \{\s*:root:not\(\.outdoor\) \{([^}]*)\}/.exec(css)[1];
 const light = tokens(lightBlock);
 const dark = { ...light, ...tokens(darkBlock) };    // 深色沒覆寫的沿用淺色
 

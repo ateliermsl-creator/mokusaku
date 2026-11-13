@@ -1,4 +1,5 @@
-import { evalLength, toKenShaku, toTaiShaku, fmtMm, toShaku } from './units.js';
+import { evalLength, toKenShaku, toTaiShaku, fmtMm, toShaku, lacksUnit } from './units.js';
+import { sanitizeRecent, pushRecent } from './recent.js';
 import { createGlossaryUI } from './glossary-ui.js';
 import { applyKey, softEval } from './keypad.js';
 import { renderFour } from './four.js';
@@ -13,12 +14,25 @@ import { createExamUI } from './exam-ui.js';
 
 const $ = (id) => document.getElementById(id);
 const STORE = 'mokusaku.v1';
-const VERSION = '39'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
+const VERSION = '40'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
 
 /* ---------- 儲存（localStorage 可能被擋，全部包 try） ---------- */
 let state = {};
 try { state = JSON.parse(localStorage.getItem(STORE)) || {}; } catch { state = {}; }
 function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch { /* ignore */ } }
+
+/* ---------- 戶外模式：字放大、文字純黑、框線加粗，並且一律用淺色（陽光下深色模式看不清楚） ---------- */
+function applyOutdoor() {
+  const on = state.outdoor === true;
+  document.documentElement.classList.toggle('outdoor', on);
+  $('outBtnState').textContent = on ? '開' : '關';
+  $('outBtn').setAttribute('aria-pressed', String(on));
+  $('st-out').value = on ? '1' : '0';
+}
+function setOutdoor(on) { state.outdoor = !!on; save(); applyOutdoor(); }
+applyOutdoor();
+$('outBtn').addEventListener('click', () => setOutdoor(state.outdoor !== true));
+$('st-out').addEventListener('input', () => setOutdoor($('st-out').value === '1'));
 
 /* ---------- 顯示小工具 ---------- */
 // 標籤：台灣用語為主，日文為輔
@@ -259,6 +273,7 @@ function openSheet(el) {
     $('sheet-keypad').classList.toggle('isnum', kind !== 'len');
   }
   $('sheet-title').textContent = fieldTitle(el);
+  renderRecent();
   sheetEl.hidden = false;
   document.body.classList.add('sheet-open');
   updateSheetLive();
@@ -269,6 +284,7 @@ function openSheet(el) {
 }
 function closeSheet() {
   if (!sheetTarget) return;
+  rememberRecent(sheetTarget);
   sheetTarget = null;
   sheetEl.hidden = true;
   document.body.classList.remove('sheet-open');
@@ -277,6 +293,7 @@ wireKeypad($('sheet-keypad'), () => sheetTarget);
 document.querySelectorAll(sheetFieldSel).forEach((el) => {
   el.addEventListener('focus', () => openSheet(el));
   el.addEventListener('click', () => { if (sheetTarget !== el) openSheet(el); });
+  el.addEventListener('blur', () => rememberRecent(el));
 });
 $('sheet-done').addEventListener('click', () => { const t = sheetTarget; closeSheet(); if (t) t.blur(); });
 document.addEventListener('input', (e) => { if (e.target === sheetTarget) updateSheetLive(); });
@@ -291,6 +308,60 @@ document.addEventListener('pointerdown', (e) => { // 點面板與長度欄位以
   closeSheet();
 });
 addEventListener('resize', () => { if (sheetTarget) ensureVisible(sheetTarget); });
+
+/* ---------- 沒寫單位的提醒：長度欄位只填數字時，在欄位下方提醒「當作 mm」 ---------- */
+const unitHintSel = '#page-calc .panel:not(#tab-mix):not(#tab-luban) input.len, #page-joint input.len';
+function updateUnitHint(el) {
+  const row = el.closest('.irow, .field');
+  if (!row) return;
+  let tip = row.nextElementSibling && row.nextElementSibling.classList.contains('unit-hint') ? row.nextElementSibling : null;
+  const show = lacksUnit(el.value);
+  if (!show) { if (tip) tip.remove(); return; }
+  if (!tip) { tip = document.createElement('p'); tip.className = 'unit-hint'; row.after(tip); }
+  let mm = null;
+  try { mm = evalLength(el.value); } catch { /* 算式有誤時只提醒單位 */ }
+  tip.textContent = `⚠ 沒寫單位，當作 ${mm === null ? '' : `${fmtMm(mm, 1)} `}mm。若是尺、寸，請在數字後面點單位。`;
+}
+document.querySelectorAll(unitHintSel).forEach((el) => {
+  updateUnitHint(el);
+  el.addEventListener('input', () => updateUnitHint(el));
+});
+
+/* ---------- 底部面板的「最近用過」：收起面板時記下欄位的值，下次點一下就帶入 ---------- */
+state.recent = sanitizeRecent(state.recent);
+const recentKey = (el) => (el.classList.contains('len') ? 'len' : el.id === 'sl-val' ? `sl-${$('sl-mode').value}` : el.id);   // 坡度欄位依寫法（寸、角度…）分開記
+function validForRecent(el) {
+  const v = el.value.trim();
+  if (!v) return false;
+  if (el.classList.contains('len')) { try { return evalLength(v) > 0; } catch { return false; } }
+  return /^[\d.]+([/:][\d.]+)?$/.test(v) && !isFrac(el) === !/[/:]/.test(v);
+}
+function rememberRecent(el) {
+  if (!el || !validForRecent(el)) return;
+  state.recent = pushRecent(state.recent, recentKey(el), el.value);
+  save();
+}
+function renderRecent() {
+  const box = $('sheet-recent');
+  box.textContent = '';
+  const list = sheetTarget ? (state.recent[recentKey(sheetTarget)] || []) : [];
+  const usable = list.filter((v) => !sheetTarget.classList.contains('num') || isFrac(sheetTarget) === /[/:]/.test(v));
+  if (!usable.length) { box.append(Object.assign(document.createElement('span'), { className: 'rc-empty', textContent: '最近用過的值會出現在這裡' })); return; }
+  box.append(Object.assign(document.createElement('span'), { className: 'rc-lbl', textContent: '最近' }));
+  for (const v of usable) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'rc'; b.textContent = v;
+    b.addEventListener('pointerdown', (e) => e.preventDefault());   // 不讓欄位失去焦點
+    b.addEventListener('click', () => {
+      const t = sheetTarget;
+      if (!t) return;
+      t.value = v;
+      try { t.setSelectionRange(v.length, v.length); } catch { /* ignore */ }
+      t.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    box.append(b);
+  }
+}
 
 /* ---------- 3. R・弧 ---------- */
 function renderArc() {
@@ -308,7 +379,10 @@ function renderArc() {
       plain('中心角', `${n(a.thetaDeg, 3)}°`) + len('弧長', a.arc);
     let div = parseInt($('arc-n').value, 10);
     if (!(div >= 2)) div = 8;
-    div = Math.min(div, 40);
+    const warns = [];
+    if (div > 40) { warns.push(`弦等分數最多 40，已用 40 等分計算（你填的是 ${div}）。`); div = 40; }
+    if (a.h > a.c / 2 + 1e-9) warns.push('弧高大於弦長的一半，這是超過半圓的大弧，請確認是不是填錯了。分點高度表只算半圓以內，所以這裡不列。');
+    for (const w of warns) err.append(Object.assign(document.createElement('p'), { className: 'warn', textContent: `⚠ ${w}` }));
     if (a.h <= a.c / 2) {
       const offs = arcOffsets(a.c, a.h, div);
       $('arc-fig').innerHTML = arcFigure({ c: a.c, h: a.h, R: a.R, thetaDeg: a.thetaDeg, n: div, offsets: offs.map((r) => r.y) });
@@ -440,6 +514,7 @@ function route() {
   if (page === 'glossary') glossary.render();
   if (page === 'exam') exam.render();
   if (page === 'joint') renderers['page-joint']();
+  document.querySelectorAll(unitHintSel).forEach(updateUnitHint);   // 從紀錄還原、從速查表帶入的值也要檢查單位
   window.scrollTo(0, 0);
 }
 

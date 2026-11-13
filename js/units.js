@@ -107,6 +107,16 @@ function parse(tokens) {
   return v;
 }
 
+/** 算式裡完全沒寫單位（例如「6」或「6+3」）→ true；空白或無法解析 → false。用來提醒「沒寫單位會當作 mm」。 */
+export function lacksUnit(src) {
+  const s = normalize(src);
+  if (!s.trim()) return false;
+  try {
+    const t = tokenize(s);
+    return t.some((x) => x.t === 'num') && !t.some((x) => x.t === 'unit');
+  } catch { return false; }
+}
+
 /** 解析長度算式，回傳 mm。空字串回傳 null；語法錯誤丟出 Error。 */
 export function evalLength(src) {
   const s = normalize(src);
