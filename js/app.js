@@ -9,10 +9,11 @@ import { renderInstall, showInAppBanner, inAppName, isStandalone } from './insta
 import { arcFigure, arcConcept, tri345, unitLadder, composition } from './figures.js';
 import { arcFromChordRise, arcFromChordRadius, arcOffsets } from './calc.js';
 import { createCalcUI, CALC_TOOLS } from './calc-ui.js';
+import { createExamUI } from './exam-ui.js';
 
 const $ = (id) => document.getElementById(id);
 const STORE = 'mokusaku.v1';
-const VERSION = '37'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
+const VERSION = '38'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
 
 /* ---------- 儲存（localStorage 可能被擋，全部包 try） ---------- */
 let state = {};
@@ -393,12 +394,14 @@ document.querySelectorAll('main input, main select').forEach((el) => {
 /* ---------- 路由 ----------
    #/ 首頁　#/install 安裝教學
    #/joint[/oikake|kama|koshikake] 仕口・継手 比例速查
+   #/exam 匠師備考（練習題、讀書檢核、術科提醒）
    #/calc 木作計算機選單；#/calc/<工具> 各工具（見 js/calc-ui.js 的 CALC_TOOLS）（四個分頁；沒寫分頁就開上次用的）
    舊網址 #/roof #/arc #/diag 會自動導到 #/calc/… */
 const CALC_TABS = CALC_TOOLS;
 const CALC_ALIAS = { roof: 'kouko' };   // 舊網址：屋頂坡度分頁已拆成勾股玄、角梁・谷木
-const PAGES = ['home', 'install', 'calc', 'glossary', 'joint'];
+const PAGES = ['home', 'install', 'calc', 'glossary', 'joint', 'exam'];
 const glossary = createGlossaryUI({ state, save });
+const exam = createExamUI({ state, save });
 const LEGACY = ['roof', 'arc', 'diag'];
 
 function route() {
@@ -420,7 +423,8 @@ function route() {
   const title = isCalc ? CALC_TABS[sub]
     : page === 'install' ? '加到手機桌面'
       : page === 'joint' ? '仕口・継手 比例速查'
-      : page === 'glossary' ? '台日大木作名詞＆構架對照庫' : '柴柴木作';
+      : page === 'glossary' ? '台日大木作名詞＆構架對照庫'
+      : page === 'exam' ? '匠師備考' : '柴柴木作';
   $('topbar').hidden = page === 'home';
   $('backBtn').hidden = !(isCalc && sub !== 'menu');
   $('topTitle').textContent = title;
@@ -434,6 +438,7 @@ function route() {
   if (page === 'install') renderInstall();
   showInAppBanner();
   if (page === 'glossary') glossary.render();
+  if (page === 'exam') exam.render();
   if (page === 'joint') renderers['page-joint']();
   window.scrollTo(0, 0);
 }
