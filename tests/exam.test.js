@@ -1,4 +1,4 @@
-// 匠師備考：題庫格式、出處、出題邏輯，以及錯題本／檢核表的資料儲存（資安：竄改的資料要被擋掉）
+// 匠師備考：題庫格式、出處、出題邏輯，以及錯題本的資料儲存（資安：竄改的資料要被擋掉）
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -6,8 +6,8 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TERMS } from '../js/glossary.js';
 import {
-  LAW_QUESTIONS, termQuestions, buildQuiz, rng32, STUDY, STUDY_IDS, RULES, RULES_URL,
-  sanitizeExam, recordAnswer, toggleDone, WRONG_MAX,
+  LAW_QUESTIONS, termQuestions, buildQuiz, rng32, RULES, RULES_URL,
+  sanitizeExam, recordAnswer, WRONG_MAX,
 } from '../js/exam.js';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -63,45 +63,36 @@ test('出題：題數上限、範圍篩選、錯題本只出錯過的題，同�
   assert.equal(buildQuiz(all, { set: 'wrong', wrong: [] }).length, 0);
 });
 
-test('資安：錯題本／檢核表讀取時擋掉竄改資料（型別、未知 id、__proto__、過長、重複）', () => {
+test('資安：錯題本讀取時擋掉竄改資料（型別、未知 id、__proto__、過長、重複）；舊版檢核表資料略過', () => {
   const known = new Set(['law01', 'law02', 't-ja-土台']);
-  assert.deepEqual(sanitizeExam(null, known), { wrong: [], done: [] });
-  assert.deepEqual(sanitizeExam('x', known), { wrong: [], done: [] });
-  assert.deepEqual(sanitizeExam([1, 2], known), { wrong: [], done: [] });
+  assert.deepEqual(sanitizeExam(null, known), { wrong: [] });
+  assert.deepEqual(sanitizeExam('x', known), { wrong: [] });
+  assert.deepEqual(sanitizeExam([1, 2], known), { wrong: [] });
   const evil = '<img src=x onerror=alert(1)>';
   const out = sanitizeExam({
     wrong: ['law01', 'law01', 5, null, {}, evil, '__proto__', 'law99', 'x'.repeat(200), 't-ja-土台'],
     done: ['d1a', 'd1a', 'zzz', evil, 3, 'd6c'],
   }, known);
   assert.deepEqual(out.wrong, ['law01', 't-ja-土台']);
-  assert.deepEqual(out.done, ['d1a', 'd6c']);
+  assert.deepEqual(Object.keys(out), ['wrong'], '舊版的檢核表（done）不再保留');
   const many = Array.from({ length: 1000 }, (_, i) => `q${i}`);
   assert.equal(sanitizeExam({ wrong: many }, new Set(many)).wrong.length, WRONG_MAX);
 });
 
-test('錯題本：答錯加入（最前面、不重複），答對移除；檢核表只接受已知項目', () => {
-  let e = { wrong: [], done: [] };
+test('錯題本：答錯加入（最前面、不重複），答對移除', () => {
+  let e = { wrong: [] };
   e = recordAnswer(e, 'law01', false);
   e = recordAnswer(e, 'law02', false);
   e = recordAnswer(e, 'law01', false);
   assert.deepEqual(e.wrong, ['law01', 'law02']);
   e = recordAnswer(e, 'law02', true);
   assert.deepEqual(e.wrong, ['law01']);
-  e = toggleDone(e, 'd2a');
-  assert.deepEqual(e.done, ['d2a']);
-  assert.deepEqual(toggleDone(e, 'd2a').done, []);
-  assert.equal(toggleDone(e, 'evil'), e);
 });
 
-test('讀書檢核與術科提醒：id 不重複、不放沒有出處的數值；試場規則附條號與原文連結', () => {
-  assert.equal(new Set(STUDY_IDS).size, STUDY_IDS.length);
-  assert.equal(STUDY.length, 6);
-  for (const d of STUDY) for (const [, text, href] of d.items) {
-    assert.ok(!/\d+\s*(%|％|mm|公分|cm)/.test(text), `檢核項目不放數值：${text}`);
-    if (href) assert.match(href, /^#\/(glossary|joint|calc\/[a-z]+)$/);
-  }
+test('術科提醒：試場規則附條號與原文連結；讀書檢核已移除', () => {
   for (const r of RULES) assert.match(r.art, /^第 [\d、]+ 條$/);
   assert.match(RULES_URL, /^https:\/\/themefile\.culture\.tw\//);
+  assert.ok(!/讀書檢核|STUDY|toggleDone/.test(read('js/exam.js') + read('js/exam-ui.js') + read('index.html')));
 });
 
 test('資安：備考介面不用 innerHTML；有首頁入口、頁面與路由', () => {

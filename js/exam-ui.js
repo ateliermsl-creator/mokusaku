@@ -1,14 +1,14 @@
-// 匠師備考：介面（練習題／讀書檢核／術科提醒）。所有文字一律用 textContent（透過 h()），不用 innerHTML。
+// 匠師備考：介面（練習題／術科提醒）。所有文字一律用 textContent（透過 h()），不用 innerHTML。
 import { h } from './dom.js';
 import { TERMS } from './glossary.js';
 import {
-  LAW_QUESTIONS, STATUS, termQuestions, buildQuiz, STUDY, STUDY_IDS, RULES, RULES_SRC, RULES_URL,
-  sanitizeExam, recordAnswer, toggleDone,
+  LAW_QUESTIONS, STATUS, termQuestions, buildQuiz, RULES, RULES_SRC, RULES_URL,
+  sanitizeExam, recordAnswer,
 } from './exam.js';
 
 const $ = (id) => document.getElementById(id);
 const QUIZ_N = 10;
-const TABS = [['quiz', '練習題'], ['study', '讀書檢核'], ['rules', '術科提醒']];
+const TABS = [['quiz', '練習題'], ['rules', '術科提醒']];
 
 export function createExamUI({ state, save }) {
   const terms = termQuestions(TERMS);
@@ -102,24 +102,6 @@ export function createExamUI({ state, save }) {
     box.append(questionCard());
   }
 
-  /* ---------- 讀書檢核 ---------- */
-  function renderStudy(box) {
-    const total = STUDY_IDS.length, n = exam.done.length;
-    box.append(h('p', { class: 'note', text: `已完成 ${n}／${total} 項。範圍依你提供的備考指南整理成六大領域，官方沒有公告命題範圍，僅供安排讀書進度。` }));
-    for (const d of STUDY) {
-      const sec = h('div', { class: 'term ex-dom' }, h('h3', { text: `${d.title}（${d.items.filter(([id]) => exam.done.includes(id)).length}／${d.items.length}）` }));
-      for (const [id, text, href] of d.items) {
-        const cb = h('input', { type: 'checkbox', id: `ex-${id}` });
-        cb.checked = exam.done.includes(id);
-        cb.addEventListener('change', () => { exam = toggleDone(exam, id); persist(); render(); });
-        sec.append(h('div', { class: 'ex-item' },
-          h('label', { for: `ex-${id}` }, cb, h('span', { text })),
-          href ? h('a', { class: 'ex-go', href, text: '前往 ›' }) : null));
-      }
-      box.append(sec);
-    }
-  }
-
   /* ---------- 術科提醒 ---------- */
   function renderRules(box) {
     box.append(h('p', { class: 'note', text: '以下整理自官方試場規則（重點摘錄，條文待核對）。術科的評分細項官方沒有公開，這裡只列「會被扣分」的規定。' }));
@@ -135,14 +117,13 @@ export function createExamUI({ state, save }) {
   function render() {
     const root = $('ex-root');
     root.textContent = '';
-    root.append(h('div', { class: 'seg ex-seg', role: 'tablist' }, TABS.map(([k, label]) => h('button', {
+    root.append(h('div', { class: 'seg', role: 'tablist' }, TABS.map(([k, label]) => h('button', {
       type: 'button', role: 'tab', 'aria-selected': String(k === tab), text: label,
       onclick: () => { tab = k; state.examTab = k; save(); render(); },
     }))));
     const box = h('div', {});
     root.append(box);
     if (tab === 'quiz') renderQuiz(box);
-    else if (tab === 'study') renderStudy(box);
     else renderRules(box);
   }
 

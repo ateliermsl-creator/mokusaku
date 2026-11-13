@@ -119,52 +119,6 @@ export function buildQuiz(all, { set = 'all', n = 10, wrong = [], rnd = Math.ran
   return shuffle(pool, rnd).slice(0, Math.max(0, n));
 }
 
-/* ───────────── 讀書檢核表（六大領域；只列項目，不放數值） ───────────── */
-
-export const STUDY = [
-  { id: 'd1', title: '日式建築概論', items: [
-    ['d1a', '空間名稱：玄關、座敷、緣側、押入、床之間'],
-    ['d1b', '真壁造與大壁造的差別'],
-    ['d1c', '床組・軸組・小屋組各構件的位置', '#/glossary'],
-    ['d1d', '和小屋與洋小屋的差異（看構架圖鑑）', '#/glossary'],
-    ['d1e', '上棟式與棟札'],
-  ] },
-  { id: 'd2', title: '文資法規與修復倫理', items: [
-    ['d2a', '文資法：古蹟、歷史建築、紀念建築、聚落建築群的定義與分級'],
-    ['d2b', '古蹟修復及再利用辦法全文（修復計畫、解體調查、工作報告書、傳統匠師）'],
-    ['d2c', '修復倫理：真實性、最小干預、可逆性、可辨識性'],
-    ['d2d', '解體前測繪與構件編號'],
-  ] },
-  { id: 'd3', title: '圖說、力學與規矩術', items: [
-    ['d3a', '床伏圖・軸組圖・小屋伏圖怎麼看'],
-    ['d3b', '洋小屋各桿件受拉或受壓（看構架圖鑑）', '#/glossary'],
-    ['d3c', '曲尺表目・裏目與寸勾配（用計算機驗算）', '#/calc/slope'],
-    ['d3d', '隅木（角梁）勾配與展開（用計算機驗算）', '#/calc/sumi'],
-  ] },
-  { id: 'd4', title: '木材與手工具', items: [
-    ['d4a', '常見樹種與使用部位'],
-    ['d4b', '含水率公式與纖維飽和點（數值以教材為準）'],
-    ['d4c', '木表・木裏與翹曲方向'],
-    ['d4d', '背割的目的'],
-    ['d4e', '材積（才）換算'],
-    ['d4f', '腐朽、白蟻與非破壞檢測'],
-    ['d4g', '日式手工具與研磨（鋸、鑿、鉋）'],
-  ] },
-  { id: 'd5', title: '継手・仕口與修復工序', items: [
-    ['d5a', '追掛大栓継ぎ、金輪継ぎ、腰掛鎌継ぎ（看仕口継手速查）', '#/joint'],
-    ['d5b', '台持継ぎ、渡りあご、大入れ、蟻掛'],
-    ['d5c', '込み栓的拉緊原理（偏移量以教材為準）'],
-    ['d5d', '埋木・矧木・根継ぎ'],
-    ['d5e', '修復工序：解體 → 調查 → 修補 → 假組 → 組立'],
-  ] },
-  { id: 'd6', title: '木料品管與職業安全', items: [
-    ['d6a', '木料進場查驗與堆放'],
-    ['d6b', '圓盤鋸、手壓鉋機的安全裝置'],
-    ['d6c', '高處作業與個人防護'],
-  ] },
-];
-export const STUDY_IDS = STUDY.flatMap((d) => d.items.map(([id]) => id));
-
 /* ───────────── 術科試場：防扣分清單（出自官方試場規則，條文待核對） ───────────── */
 
 export const RULES_SRC = '文化部《傳統匠師資格審查學術科測試試場規則》（110.08.31 訂定，111.04.22 修正）';
@@ -177,7 +131,7 @@ export const RULES = [
   { pts: '其他規定', items: ['測試開始後 15 分鐘內要入場，逾時不得入場', '測試開始後 30 分鐘內不得離場', '術科：預備鈴響前 30 分鐘試場關閉，工具要先擺好', '不可在作品上寫姓名、座號等可辨識身分的內容', '不可攜帶或使用手機等資訊器材'], art: '第 4、5、10、11 條' },
 ];
 
-/* ───────────── 儲存的進度（錯題本、檢核表）：讀取時一律檢查型別 ───────────── */
+/* ───────────── 儲存的進度（錯題本）：讀取時一律檢查型別（舊版的檢核表資料直接略過） ───────────── */
 
 export const WRONG_MAX = 300;
 
@@ -194,20 +148,11 @@ export function sanitizeExam(raw, known) {
     }
     return out;
   };
-  return {
-    wrong: ids(o.wrong, (x) => known.has(x), WRONG_MAX),
-    done: ids(o.done, (x) => STUDY_IDS.includes(x), STUDY_IDS.length),
-  };
+  return { wrong: ids(o.wrong, (x) => known.has(x), WRONG_MAX) };
 }
 
 /** 作答後更新錯題本：答錯加入（放最前面），答對移除 */
 export function recordAnswer(exam, id, correct) {
   const rest = exam.wrong.filter((x) => x !== id);
   return { ...exam, wrong: correct ? rest : [id, ...rest].slice(0, WRONG_MAX) };
-}
-
-/** 檢核表打勾／取消 */
-export function toggleDone(exam, id) {
-  if (!STUDY_IDS.includes(id)) return exam;
-  return { ...exam, done: exam.done.includes(id) ? exam.done.filter((x) => x !== id) : [...exam.done, id] };
 }
