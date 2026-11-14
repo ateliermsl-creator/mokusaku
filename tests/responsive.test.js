@@ -37,3 +37,8 @@ test('版面變更沒有放寬 CSP', () => {
   assert.ok(!/unsafe-eval|https?:/.test(csp));
   assert.match(csp, /script-src 'self'(;|$)/);
 });
+
+test('電腦版首頁不顯示側欄：路由會切換 is-home，CSS 隱藏側欄', () => {
+  assert.match(read('js/app.js'), /classList\.toggle\('is-home', page === 'home'\)/);
+  assert.match(css, /body\.is-home #sidenav \{ display: none; \}/);
+});
