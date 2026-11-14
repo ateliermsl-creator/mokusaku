@@ -643,3 +643,94 @@ button.tool[aria-pressed="true"] { border: 2px solid var(--accent); }
 .outdoor .irow input::placeholder { color: #555; }
 .outdoor .fig .dim, .outdoor .fig .dm { stroke: #333; }
 .outdoor .seg button:not([aria-selected="true"]), .outdoor .seg2 button:not([aria-pressed="true"]) { color: var(--ink); }
+
+/* ═════════ 電腦版（響應式）：手機版（< 900px）完全不受影響 ═════════
+   900px 以上：左側欄導覽＋較寬的內容欄；1280px 以上：內容分成左右兩欄
+   （左：輸入、右：結果／圖／3D）。右欄是日後 3D 軸組檢視的位置。 */
+#sidenav { display: none; }
+
+/* 滑鼠與鍵盤：游標移上去有回饋、Tab 鍵有焦點框（手機不受影響） */
+@media (hover: hover) {
+  .tool:hover, .btn:hover, .rc:hover { border-color: var(--accent); }
+  .tool:hover { background: var(--surface-2); }
+  .btn:hover:not(.primary) { background: var(--surface-2); }
+  .keypad .k:hover { filter: brightness(.94); }
+}
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+@media (min-width: 900px) {
+  :root { --side-w: 220px; --mw: min(760px, calc(100vw - var(--side-w))); }
+  body { padding-left: var(--side-w); }
+  #sidenav {
+    display: flex; flex-direction: column; gap: 4px;
+    position: fixed; top: 0; bottom: 0; left: 0; width: var(--side-w); z-index: 6;
+    padding: 16px 12px; overflow-y: auto;
+    background: var(--surface-2); border-right: 1px solid var(--line);
+  }
+  #sidenav a {
+    display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 12px;
+    border-radius: 12px; color: var(--ink); text-decoration: none; font-size: 16px; font-weight: 600;
+  }
+  #sidenav a:hover { background: var(--surface); }
+  #sidenav a[aria-current="page"] { background: var(--accent); color: var(--accent-ink); }
+  #sidenav .sn-ic { width: 1.6em; text-align: center; }
+  #sidenav .sn-brand { gap: 10px; margin-bottom: 10px; font-size: 18px; letter-spacing: .06em; color: var(--accent); }
+  #sidenav .sn-brand:hover { background: transparent; }
+  #sidenav .sn-brand img { border-radius: 10px; }
+
+  /* 頂欄：側欄已有首頁，這裡只留標題與「回計算機選單」 */
+  #homeBtn { display: none !important; }
+  main { max-width: var(--mw); padding: 0 24px; }
+  #iab { max-width: var(--mw); margin-left: auto; margin-right: auto; }
+  section.panel { padding: 18px 0 0; }
+  input, select { font-size: 16px; }
+  .kbswitch { display: none; }          /* 電腦有實體鍵盤，不需要「改用手機鍵盤」 */
+
+  /* 底部輸入面板：電腦上靠左、不要鋪滿 */
+  .sheet { left: var(--side-w); right: 0; width: min(560px, var(--mw)); max-width: none;
+    margin: 0 auto 12px; border-radius: 16px; border-bottom: 1px solid var(--line); }
+  .ex-nextbar { left: var(--side-w); right: 0; max-width: 640px; }
+
+  /* 首頁：卡片兩欄 */
+  #page-home { display: grid; grid-template-columns: 1fr 1fr; align-items: stretch; padding-top: 18px; }
+  #page-home > .hero, #page-home > .hint { grid-column: 1 / -1; }
+  #page-home > .hero { border-top: 1px solid var(--hero-line); border-radius: 28px; margin: 0 12px; }
+  #page-home > .tool, #page-home > .hint { margin: 12px; }
+  #page-home .tool b { font-size: 18px; }
+  #page-home .tool small { display: block; }
+
+  /* 備考：置中、字稍放大 */
+  #page-exam { font-size: 17px; }
+  .jt3d-host { height: min(70vh, 520px); }
+  .fig.big { max-height: 70vh; }
+}
+
+@media (min-width: 1280px) {
+  :root { --mw: min(1180px, calc(100vw - var(--side-w))); }
+  /* 面板在左欄：寬 = (內容寬 − 左右各 24 − 欄距 24) / 2 */
+  .sheet { width: calc((var(--mw) - 72px) / 2); margin: 0 0 12px;
+    left: calc(var(--side-w) + (100vw - var(--side-w) - var(--mw)) / 2 + 24px); right: auto; }
+  .ex-nextbar { max-width: none; }
+
+  /* 計算機各工具：左輸入、右圖（圖跟著捲動） */
+  .ctool, #tab-mix, #page-joint { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 24px; align-items: start; }
+  .ctool > *, #tab-mix > *, #page-joint > * { grid-column: 1; }
+  .ctool > .figwrap:first-child { grid-column: 2; grid-row: 1 / span 40; position: sticky; top: 72px; margin: 4px 0; }
+  .ctool > .figwrap:first-child ~ .figwrap { grid-column: 1; }
+
+  /* 台尺混算：左算式與按鍵、右結果與換算 */
+  #tab-mix > #calc-out { grid-column: 2; grid-row: 1 / span 2; margin-top: 0; }
+  #tab-mix > #mix-more { grid-column: 2; grid-row: 3 / span 40; }
+  #tab-mix > #mix-more > h2:first-of-type { margin-top: 4px; }
+  #tab-mix > .gl-about, #tab-mix > .note { grid-column: 1; }
+
+  /* 仕口・継手：左輸入與比例表、右圖與 3D */
+  #page-joint > #jt-vis { grid-column: 2; grid-row: 1 / span 40; position: sticky; top: 72px; }
+  #page-joint > #jt-3d { margin: 0; }
+
+  /* 名詞庫：詞條卡片分兩欄 */
+  #gl-list { display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; align-items: start; }
+
+  /* 首頁：三欄 */
+  #page-home { grid-template-columns: repeat(3, 1fr); }
+}
