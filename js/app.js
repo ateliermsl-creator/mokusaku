@@ -14,7 +14,7 @@ import { createExamUI } from './exam-ui.js';
 
 const $ = (id) => document.getElementById(id);
 const STORE = 'mokusaku.v1';
-const VERSION = '41'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
+const VERSION = '42'; // 與 sw.js 的 VERSION、index.html 的 <html data-v> 必須一致
 
 /* ---------- 儲存（localStorage 可能被擋，全部包 try） ---------- */
 let state = {};
@@ -500,6 +500,7 @@ function route() {
       : page === 'glossary' ? '台日大木作名詞＆構架對照庫'
       : page === 'exam' ? '匠師備考' : '柴柴木作';
   $('topbar').hidden = page === 'home';
+  document.body.classList.toggle('is-home', page === 'home');   // 電腦版：首頁不顯示側欄，進入內頁才出現
   document.querySelectorAll('#sidenav a[data-nav]').forEach((a) => { // 電腦版側欄：標出目前所在頁
     if (a.dataset.nav === page) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   });
